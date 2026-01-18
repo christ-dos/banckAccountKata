@@ -21,7 +21,7 @@ public class Account {
         return new Account(
                 UUID.randomUUID(),
                 BigDecimal.ZERO,
-                currency != null ? currency : "EUR",
+                (currency != null && !currency.isBlank()) ? currency : "EUR",
                 OffsetDateTime.now()
         );
     }

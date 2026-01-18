@@ -23,8 +23,9 @@ public class AccountService implements CreateAccountUseCase,
 
     @Override
     @Transactional
-    public UUID createAccount(String currency) {
-        return accountPort.save(Account.create(currency)).getAccountId();
+    public Account createAccount(String currency) {
+        Account account = Account.create(currency);
+        return accountPort.save(account);
     }
 
     @Override

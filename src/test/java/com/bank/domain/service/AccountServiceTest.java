@@ -91,6 +91,8 @@ class AccountServiceTest {
     @ParameterizedTest(name = "Create account with currency: {0} (expected: {1})")
     @CsvSource({
             ",EUR",           // null → EUR (default)
+            "'',EUR",         // empty string → EUR (default)
+            "'   ',EUR",      // blank string → EUR (default)
             "EUR,EUR",
             "USD,USD",
             "GBP,GBP"
@@ -107,11 +109,13 @@ class AccountServiceTest {
 
         // When
         when(accountPort.save(accountCaptor.capture())).thenReturn(savedAccount);
-        UUID accountId = accountService.createAccount(inputCurrency);
+        Account createdAccount = accountService.createAccount(inputCurrency);
 
         // Then
-        assertNotNull(accountId);
-        assertEquals(savedAccount.getAccountId(), accountId);
+        assertNotNull(createdAccount);
+        assertEquals(savedAccount.getAccountId(), createdAccount.getAccountId());
+        assertEquals(savedAccount.getBalance(), createdAccount.getBalance());
+        assertEquals(savedAccount.getCurrency(), createdAccount.getCurrency());
 
         // Verify that Account.create() created an account with expected currency
         Account capturedAccount = accountCaptor.getValue();
@@ -286,7 +290,7 @@ class AccountServiceTest {
 
         // When - Create
         when(accountPort.save(any(Account.class))).thenReturn(createdAccount);
-        UUID createdId = accountService.createAccount(currency);
+        Account createdId = accountService.createAccount(currency);
 
         // Then - Create
         assertNotNull(createdId);

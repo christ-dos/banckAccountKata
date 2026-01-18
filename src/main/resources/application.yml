@@ -1,6 +1,6 @@
 spring:
   application:
-    name: bank-account
+    name: bank-account-api
 
   # Configuration H2 pour le développement
   datasource:
@@ -25,7 +25,7 @@ spring:
 server:
   port: 9090
 
-logging:
+loging:
   level:
     com.bank: DEBUG
     org.springframework.web: INFO
