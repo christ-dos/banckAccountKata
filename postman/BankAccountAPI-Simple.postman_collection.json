@@ -1,0 +1,100 @@
+{
+  "info": {
+    "name": "Bank Account API - Simple",
+    "description": "Collection simple pour Bank Account API (sans scripts automatiques)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Create Account (EUR)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currency\": \"EUR\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts"]
+        },
+        "description": "Crée un nouveau compte bancaire en EUR. Copiez l'accountId de la réponse pour l'utiliser dans les requêtes suivantes."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Get Account Details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_VOTRE_ACCOUNT_ID",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_VOTRE_ACCOUNT_ID"]
+        },
+        "description": "Récupère les détails d'un compte (accountId, balance, currency). IMPORTANT : Remplacez 'REMPLACER_PAR_VOTRE_ACCOUNT_ID' par l'ID du compte."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Deposit Money",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 100.50\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_VOTRE_ACCOUNT_ID/deposit",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_VOTRE_ACCOUNT_ID", "deposit"]
+        },
+        "description": "Dépose de l'argent sur un compte. IMPORTANT : Remplacez 'REMPLACER_PAR_VOTRE_ACCOUNT_ID' par l'ID du compte créé précédemment."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Withdraw Money",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 50.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_VOTRE_ACCOUNT_ID/withdraw",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_VOTRE_ACCOUNT_ID", "withdraw"]
+        },
+        "description": "Retire de l'argent d'un compte. Le solde doit être suffisant. IMPORTANT : Remplacez 'REMPLACER_PAR_VOTRE_ACCOUNT_ID' par l'ID du compte."
+      },
+      "response": []
+    }
+  ]
+}
