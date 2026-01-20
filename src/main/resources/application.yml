@@ -21,6 +21,13 @@ spring:
     properties:
       hibernate:
         format_sql: true
+    # Important : Permet à Hibernate de créer les tables AVANT d'exécuter data.sql
+    defer-datasource-initialization: true
+
+  # Initialisation des données de test au démarrage
+  sql:
+    init:
+      mode: always
 
 server:
   port: 9090
