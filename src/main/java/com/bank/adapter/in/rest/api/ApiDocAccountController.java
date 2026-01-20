@@ -1,9 +1,10 @@
 package com.bank.adapter.in.rest.api;
 
 import com.bank.adapter.in.rest.dto.AccountDto;
-import com.bank.adapter.in.rest.dto.CreateAccountRequest;
-import com.bank.adapter.in.rest.dto.DepositRequest;
-import com.bank.adapter.in.rest.dto.WithdrawRequest;
+import com.bank.adapter.in.rest.request.CreateAccountRequest;
+import com.bank.adapter.in.rest.request.DepositRequest;
+import com.bank.adapter.in.rest.request.WithdrawRequest;
+import com.bank.adapter.in.rest.request.SetOverdraftLimitRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -106,5 +107,30 @@ public interface ApiDocAccountController {
             @Parameter(description = "Account ID", required = true)
             @PathVariable UUID accountId,
             @Valid @RequestBody WithdrawRequest request
+    );
+
+    @Operation(
+            summary = "Configure overdraft limit",
+            description = "Sets or updates the authorized overdraft limit for an account. The limit must be positive or zero. Returns the updated account."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Overdraft limit configured successfully - returns updated account",
+                    content = @Content(schema = @Schema(implementation = AccountDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid overdraft limit - must be positive or zero"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Account not found"
+            )
+    })
+    ResponseEntity<AccountDto> setOverdraftLimit(
+            @Parameter(description = "Account ID", required = true)
+            @PathVariable UUID accountId,
+            @Valid @RequestBody SetOverdraftLimitRequest request
     );
 }

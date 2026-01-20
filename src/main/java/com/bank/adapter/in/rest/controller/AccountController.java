@@ -2,9 +2,10 @@ package com.bank.adapter.in.rest.controller;
 
 import com.bank.adapter.in.rest.api.ApiDocAccountController;
 import com.bank.adapter.in.rest.dto.AccountDto;
-import com.bank.adapter.in.rest.dto.CreateAccountRequest;
-import com.bank.adapter.in.rest.dto.DepositRequest;
-import com.bank.adapter.in.rest.dto.WithdrawRequest;
+import com.bank.adapter.in.rest.request.CreateAccountRequest;
+import com.bank.adapter.in.rest.request.DepositRequest;
+import com.bank.adapter.in.rest.request.WithdrawRequest;
+import com.bank.adapter.in.rest.request.SetOverdraftLimitRequest;
 import com.bank.adapter.in.rest.mapper.AccountDtoMapper;
 import com.bank.domain.model.Account;
 import com.bank.domain.service.AccountService;
@@ -74,6 +75,18 @@ public class AccountController implements ApiDocAccountController {
         AccountDto accountDto = mapper.toAccountDto(updatedAccount);
 
         log.info("Withdrawal successful for account: {}", accountId);
+
+        return ResponseEntity.ok(accountDto);
+    }
+
+    @PutMapping("/{accountId}/overdraft")
+    @Override
+    public ResponseEntity<AccountDto> setOverdraftLimit(@PathVariable UUID accountId, @Valid @RequestBody SetOverdraftLimitRequest request) {
+        accountService.setOverdraftLimit(accountId, request.overdraftLimit());
+        Account updatedAccount = accountService.getAccountDetails(accountId);
+        AccountDto accountDto = mapper.toAccountDto(updatedAccount);
+
+        log.info("Overdraft limit set to {} for account: {}", request.overdraftLimit(), accountId);
 
         return ResponseEntity.ok(accountDto);
     }

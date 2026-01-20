@@ -1,6 +1,6 @@
 package com.bank.adapter.in.rest.controller;
 
-import com.bank.adapter.in.rest.dto.CreateAccountRequest;
+import com.bank.adapter.in.rest.request.CreateAccountRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
