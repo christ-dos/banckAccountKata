@@ -31,7 +31,8 @@ class AccountMapperTest {
                 accountId,
                 new BigDecimal("100.50"),
                 "EUR",
-                createdAt
+                createdAt,
+                null
         );
 
         // When
@@ -68,12 +69,12 @@ class AccountMapperTest {
         // Given
         UUID accountId = UUID.randomUUID();
         OffsetDateTime createdAt = OffsetDateTime.now();
-        AccountEntity entity = new AccountEntity(
-                accountId,
-                new BigDecimal("250.75"),
-                "GBP",
-                createdAt
-        );
+        AccountEntity entity = AccountEntity.builder()
+                .accountId(accountId)
+                .balance(new BigDecimal("250.75"))
+                .currency("GBP")
+                .createdAt(createdAt)
+                .build();
 
         // When
         Account account = mapper.toAccountDomain(entity);
@@ -111,7 +112,8 @@ class AccountMapperTest {
                 accountId,
                 new BigDecimal("999.99"),
                 "JPY",
-                createdAt
+                createdAt,
+                null
         );
 
         // When

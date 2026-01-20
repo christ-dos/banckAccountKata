@@ -46,14 +46,15 @@ class JpaAccountAdapterTest {
                 testAccountId,
                 new BigDecimal("100.00"),
                 "EUR",
-                OffsetDateTime.now()
+                OffsetDateTime.now(),
+                null
         );
-        testEntity = new AccountEntity(
-                testAccountId,
-                new BigDecimal("100.00"),
-                "EUR",
-                OffsetDateTime.now()
-        );
+        testEntity = AccountEntity.builder()
+                .accountId(testAccountId)
+                .balance(new BigDecimal("100.00"))
+                .currency("EUR")
+                .createdAt(OffsetDateTime.now())
+                .build();
     }
 
     // ========================================
@@ -80,12 +81,12 @@ class JpaAccountAdapterTest {
     void test_save_should_handle_new_account() {
         // Given
         Account newAccount = Account.create("USD");
-        AccountEntity newEntity = new AccountEntity(
-                newAccount.getAccountId(),
-                BigDecimal.ZERO,
-                "USD",
-                newAccount.getCreatedAt()
-        );
+        AccountEntity newEntity = AccountEntity.builder()
+                .accountId(newAccount.getAccountId())
+                .balance(BigDecimal.ZERO)
+                .currency("USD")
+                .createdAt(newAccount.getCreatedAt())
+                .build();
 
         // When
         when(accountMapper.toAccountEntity(newAccount)).thenReturn(newEntity);
@@ -108,14 +109,15 @@ class JpaAccountAdapterTest {
                 testAccountId,
                 new BigDecimal("250.00"),
                 "EUR",
-                testAccount.getCreatedAt()
+                testAccount.getCreatedAt(),
+                null
         );
-        AccountEntity updatedEntity = new AccountEntity(
-                testAccountId,
-                new BigDecimal("250.00"),
-                "EUR",
-                testAccount.getCreatedAt()
-        );
+        AccountEntity updatedEntity = AccountEntity.builder()
+                .accountId(testAccountId)
+                .balance(new BigDecimal("250.00"))
+                .currency("EUR")
+                .createdAt(testAccount.getCreatedAt())
+                .build();
 
         // When
         when(accountMapper.toAccountEntity(updatedAccount)).thenReturn(updatedEntity);

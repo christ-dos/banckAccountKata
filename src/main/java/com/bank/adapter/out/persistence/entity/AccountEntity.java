@@ -35,4 +35,7 @@ public class AccountEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
     private OffsetDateTime createdAt;
+
+    @Column(name = "overdraft_limit", precision = 19, scale = 2)
+    private BigDecimal overdraftLimit;
 }
