@@ -95,6 +95,256 @@
         "description": "Retire de l'argent d'un compte. Le solde doit être suffisant. IMPORTANT : Remplacez 'REMPLACER_PAR_VOTRE_ACCOUNT_ID' par l'ID du compte."
       },
       "response": []
+    },
+    {
+      "name": "5. Create Account with Overdraft (EUR - 100€ limit)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currency\": \"EUR\",\n  \"overdraftLimit\": 100.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts"]
+        },
+        "description": "Crée un compte avec un découvert autorisé de 100€. Copiez l'accountId pour tester le découvert."
+      },
+      "response": []
+    },
+    {
+      "name": "6. Create Account with Large Overdraft (EUR - 500€ limit)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currency\": \"EUR\",\n  \"overdraftLimit\": 500.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts"]
+        },
+        "description": "Crée un compte premium avec un découvert de 500€."
+      },
+      "response": []
+    },
+    {
+      "name": "7. Test Overdraft - Withdraw within limit",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 120.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_ACCOUNT_ID_AVEC_OVERDRAFT/withdraw",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_ACCOUNT_ID_AVEC_OVERDRAFT", "withdraw"]
+        },
+        "description": "Teste un retrait qui utilise le découvert. Exemple: si balance=50€ et overdraft=100€, retirer 120€ donne balance=-70€ (OK car -70 > -100)."
+      },
+      "response": []
+    },
+    {
+      "name": "8. Test Overdraft - Exceeds limit (should fail)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 200.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_ACCOUNT_ID_AVEC_OVERDRAFT/withdraw",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_ACCOUNT_ID_AVEC_OVERDRAFT", "withdraw"]
+        },
+        "description": "Teste un retrait qui dépasse le découvert autorisé. Devrait retourner une erreur 400. Exemple: balance=50€, overdraft=100€, retrait=200€ → erreur car -150 < -100."
+      },
+      "response": []
+    },
+    {
+      "name": "9. Complete Scenario with Overdraft",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 150.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_ACCOUNT_ID_AVEC_OVERDRAFT/withdraw",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_ACCOUNT_ID_AVEC_OVERDRAFT", "withdraw"]
+        },
+        "description": "Scénario complet: 1) Créez un compte avec overdraft=100€ (req 5), 2) Déposez 50€ (req 3), 3) Retirez 150€ (cette req) → balance=-100€ (limite exacte)."
+      },
+      "response": []
+    },
+    {
+      "name": "10. Set Overdraft Limit (Configure après création)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"overdraftLimit\": 100.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_VOTRE_ACCOUNT_ID/overdraft",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_VOTRE_ACCOUNT_ID", "overdraft"]
+        },
+        "description": "Configure ou modifie le découvert autorisé sur un compte existant. IMPORTANT : Remplacez 'REMPLACER_PAR_VOTRE_ACCOUNT_ID' par l'ID du compte."
+      },
+      "response": []
+    },
+    {
+      "name": "11. Update Overdraft Limit (Modifier le découvert)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"overdraftLimit\": 200.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_VOTRE_ACCOUNT_ID/overdraft",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_VOTRE_ACCOUNT_ID", "overdraft"]
+        },
+        "description": "Modifie un découvert existant. Exemple: passer de 100€ à 200€ de découvert autorisé."
+      },
+      "response": []
+    },
+    {
+      "name": "12. Remove Overdraft Limit (Supprimer le découvert)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"overdraftLimit\": 0.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_VOTRE_ACCOUNT_ID/overdraft",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_VOTRE_ACCOUNT_ID", "overdraft"]
+        },
+        "description": "Supprime le découvert en le mettant à 0. Après cela, les retraits nécessiteront un solde positif."
+      },
+      "response": []
+    },
+    {
+      "name": "13. Test Negative Overdraft (should fail)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"overdraftLimit\": -100.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_VOTRE_ACCOUNT_ID/overdraft",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_VOTRE_ACCOUNT_ID", "overdraft"]
+        },
+        "description": "Teste qu'un découvert négatif est rejeté. Devrait retourner une erreur 400."
+      },
+      "response": []
+    },
+    {
+      "name": "14. Complete Scenario - Set Overdraft After Creation",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"overdraftLimit\": 150.00\n}"
+        },
+        "url": {
+          "raw": "http://localhost:9090/v1/accounts/REMPLACER_PAR_VOTRE_ACCOUNT_ID/overdraft",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "9090",
+          "path": ["v1", "accounts", "REMPLACER_PAR_VOTRE_ACCOUNT_ID", "overdraft"]
+        },
+        "description": "Scénario complet: 1) Créez un compte (req 1), 2) Configurez le découvert à 150€ (cette req), 3) Déposez 50€ (req 3), 4) Retirez 180€ (req 4) → balance=-130€."
+      },
+      "response": []
     }
   ]
 }
