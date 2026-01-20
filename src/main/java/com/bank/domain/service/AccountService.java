@@ -6,18 +6,22 @@ import com.bank.domain.port.in.CreateAccountUseCase;
 import com.bank.domain.port.in.DepositUseCase;
 import com.bank.domain.port.in.GetAccountInfoUseCase;
 import com.bank.domain.port.in.WithdrawUseCase;
+import com.bank.domain.port.in.SetOverdraftLimitUseCase;
 import com.bank.domain.port.out.AccountPort;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 public class AccountService implements CreateAccountUseCase,
         GetAccountInfoUseCase,
         DepositUseCase,
-        WithdrawUseCase
+        WithdrawUseCase,
+        SetOverdraftLimitUseCase
 {
     private final AccountPort accountPort;
 
@@ -56,5 +60,19 @@ public class AccountService implements CreateAccountUseCase,
         Account account = getAccountDetails(accountId);
         account.withdraw(amount);
         accountPort.save(account);
+    }
+
+    @Override
+    @Transactional
+    public void setOverdraftLimit(UUID accountId, BigDecimal overdraftLimit) {
+        if (overdraftLimit != null && overdraftLimit.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Overdraft limit must be positive or zero");
+        }
+
+        Account account = getAccountDetails(accountId);
+        account.setOverdraftLimit(overdraftLimit);
+        accountPort.save(account);
+
+        log.info("Overdraft limit set to {} for account: {}", overdraftLimit, accountId);
     }
 }

@@ -48,7 +48,8 @@ class AccountServiceTest {
                 testAccountId,
                 new BigDecimal("100.00"),
                 "EUR",
-                OffsetDateTime.now()
+                OffsetDateTime.now(),
+                null
         );
     }
 
@@ -57,7 +58,7 @@ class AccountServiceTest {
     // ========================================
 
     private static Stream<Arguments> depositInvalidScenariosProvider() {
-        Account testAccount = new Account(UUID.randomUUID(), new BigDecimal("100.00"), "EUR", OffsetDateTime.now());
+        Account testAccount = new Account(UUID.randomUUID(), new BigDecimal("100.00"), "EUR", OffsetDateTime.now(), null);
         return Stream.of(
                 // Account not found - should throw BankAccountNotFoundException
                 Arguments.of(new BigDecimal("50.00"), Optional.empty(), BankAccountNotFoundException.class),
@@ -71,7 +72,7 @@ class AccountServiceTest {
     }
 
     private static Stream<Arguments> withdrawInvalidScenariosProvider() {
-        Account testAccount = new Account(UUID.randomUUID(), new BigDecimal("100.00"), "EUR", OffsetDateTime.now());
+        Account testAccount = new Account(UUID.randomUUID(), new BigDecimal("100.00"), "EUR", OffsetDateTime.now(), null);
         return Stream.of(
                 // Account not found - should throw BankAccountNotFoundException
                 Arguments.of(new BigDecimal("30.00"), Optional.empty(), BankAccountNotFoundException.class),
@@ -104,7 +105,8 @@ class AccountServiceTest {
                 UUID.randomUUID(),
                 BigDecimal.ZERO,
                 expectedCurrency,
-                OffsetDateTime.now()
+                OffsetDateTime.now(),
+                null
         );
 
         // When
@@ -207,7 +209,8 @@ class AccountServiceTest {
                 testAccountId,
                 new BigDecimal("150.00"),
                 "EUR",
-                testAccount.getCreatedAt()
+                testAccount.getCreatedAt(),
+                null
         );
 
         // When
@@ -248,7 +251,8 @@ class AccountServiceTest {
                 testAccountId,
                 new BigDecimal("70.00"),
                 "EUR",
-                testAccount.getCreatedAt()
+                testAccount.getCreatedAt(),
+                null
         );
 
         // When
@@ -286,7 +290,7 @@ class AccountServiceTest {
         // Given
         String currency = "USD";
         UUID accountId = UUID.randomUUID();
-        Account createdAccount = new Account(accountId, BigDecimal.ZERO, currency, OffsetDateTime.now());
+        Account createdAccount = new Account(accountId, BigDecimal.ZERO, currency, OffsetDateTime.now(), null);
 
         // When - Create
         when(accountPort.save(any(Account.class))).thenReturn(createdAccount);
@@ -297,7 +301,7 @@ class AccountServiceTest {
         verify(accountPort).save(any(Account.class));
 
         // When - Deposit
-        Account accountAfterDeposit = new Account(accountId, new BigDecimal("100.00"), currency, createdAccount.getCreatedAt());
+        Account accountAfterDeposit = new Account(accountId, new BigDecimal("100.00"), currency, createdAccount.getCreatedAt(), null);
         when(accountPort.findById(accountId)).thenReturn(Optional.of(createdAccount));
         when(accountPort.save(any(Account.class))).thenReturn(accountAfterDeposit);
         accountService.deposit(accountId, new BigDecimal("100.00"));
@@ -311,5 +315,129 @@ class AccountServiceTest {
 
         // Then - Get Balance
         assertEquals(new BigDecimal("100.00"), balance);
+    }
+
+    // ========================================
+    // SET OVERDRAFT LIMIT TESTS
+    // ========================================
+
+    @Test
+    void test_setOverdraftLimit_should_update_account_overdraft() {
+        // Given
+        BigDecimal newOverdraftLimit = new BigDecimal("200.00");
+        when(accountPort.findById(testAccountId)).thenReturn(Optional.of(testAccount));
+        when(accountPort.save(any(Account.class))).thenReturn(testAccount);
+
+        // When
+        accountService.setOverdraftLimit(testAccountId, newOverdraftLimit);
+
+        // Then
+        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+        verify(accountPort).findById(testAccountId);
+        verify(accountPort).save(accountCaptor.capture());
+
+        Account savedAccount = accountCaptor.getValue();
+        assertEquals(newOverdraftLimit, savedAccount.getOverdraftLimit());
+    }
+
+    @Test
+    void test_setOverdraftLimit_should_allow_null_to_remove_overdraft() {
+        // Given
+        Account accountWithOverdraft = new Account(
+                testAccountId,
+                new BigDecimal("100.00"),
+                "EUR",
+                OffsetDateTime.now(),
+                new BigDecimal("100.00")
+        );
+        when(accountPort.findById(testAccountId)).thenReturn(Optional.of(accountWithOverdraft));
+        when(accountPort.save(any(Account.class))).thenReturn(accountWithOverdraft);
+
+        // When
+        accountService.setOverdraftLimit(testAccountId, null);
+
+        // Then
+        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+        verify(accountPort).save(accountCaptor.capture());
+
+        Account savedAccount = accountCaptor.getValue();
+        assertNull(savedAccount.getOverdraftLimit());
+    }
+
+    @Test
+    void test_setOverdraftLimit_should_allow_zero() {
+        // Given
+        when(accountPort.findById(testAccountId)).thenReturn(Optional.of(testAccount));
+        when(accountPort.save(any(Account.class))).thenReturn(testAccount);
+
+        // When
+        accountService.setOverdraftLimit(testAccountId, BigDecimal.ZERO);
+
+        // Then
+        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+        verify(accountPort).save(accountCaptor.capture());
+
+        Account savedAccount = accountCaptor.getValue();
+        assertEquals(BigDecimal.ZERO, savedAccount.getOverdraftLimit());
+    }
+
+    @Test
+    void test_setOverdraftLimit_should_throw_exception_when_account_not_found() {
+        // Given
+        UUID nonExistentId = UUID.randomUUID();
+        when(accountPort.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(
+                BankAccountNotFoundException.class,
+                () -> accountService.setOverdraftLimit(nonExistentId, new BigDecimal("100.00"))
+        );
+
+        verify(accountPort).findById(nonExistentId);
+        verify(accountPort, never()).save(any(Account.class));
+    }
+
+    @Test
+    void test_setOverdraftLimit_should_throw_exception_when_negative() {
+        // Given
+        BigDecimal negativeOverdraft = new BigDecimal("-100.00");
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> accountService.setOverdraftLimit(testAccountId, negativeOverdraft)
+        );
+
+        assertEquals("Overdraft limit must be positive or zero", exception.getMessage());
+
+        // Note: La validation échoue AVANT l'appel à getAccountDetails()
+        // donc ni findById() ni save() ne sont appelés
+        verify(accountPort, never()).findById(any(UUID.class));
+        verify(accountPort, never()).save(any(Account.class));
+    }
+
+    @ParameterizedTest(name = "Set overdraft limit to {0}")
+    @CsvSource({
+            "0.00,    zero overdraft",
+            "50.00,   small overdraft",
+            "100.00,  standard overdraft",
+            "500.00,  large overdraft",
+            "1000.00, premium overdraft"
+    })
+    void test_setOverdraftLimit_should_accept_various_valid_amounts(String overdraftAmount, String description) {
+        // Given
+        BigDecimal overdraftLimit = new BigDecimal(overdraftAmount);
+        when(accountPort.findById(testAccountId)).thenReturn(Optional.of(testAccount));
+        when(accountPort.save(any(Account.class))).thenReturn(testAccount);
+
+        // When
+        accountService.setOverdraftLimit(testAccountId, overdraftLimit);
+
+        // Then
+        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+        verify(accountPort).save(accountCaptor.capture());
+
+        Account savedAccount = accountCaptor.getValue();
+        assertEquals(overdraftLimit, savedAccount.getOverdraftLimit());
     }
 }
