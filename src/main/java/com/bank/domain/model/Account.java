@@ -1,82 +1,65 @@
 package com.bank.domain.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Getter
-@AllArgsConstructor
-public class Account {
-    private  UUID accountId;
-    @Setter
-    private BigDecimal balance;
-    private String currency;
-    private OffsetDateTime createdAt;
-    @Setter
-    private BigDecimal overdraftLimit;
+/**
+ * Account contract - defines behavior for all account types.
+ * Domain interface - Pure business contract, no implementation details.
+ */
+public interface Account {
 
-    public static Account create(String currency) {
-        return create(currency, null);
-    }
+    /**
+     * Gets the unique account identifier.
+     */
+    UUID getAccountId();
 
-    public static Account create(String currency, BigDecimal overdraftLimit) {
-        if (overdraftLimit != null && overdraftLimit.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Overdraft limit must be positive");
-        }
+    /**
+     * Gets the current balance.
+     */
+    BigDecimal getBalance();
 
-        return new Account(
-                UUID.randomUUID(),
-                BigDecimal.ZERO,
-                (currency != null && !currency.isBlank()) ? currency : "EUR",
-                OffsetDateTime.now(),
-                overdraftLimit
-        );
-    }
+    /**
+     * Gets the account currency.
+     */
+    String getCurrency();
 
-    public void deposit (BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Deposit amount must be positive and not null");
-        }
-        this.balance = this.balance.add(amount);
-    }
+    /**
+     * Gets the account creation timestamp.
+     */
+    OffsetDateTime getCreatedAt();
 
-    public void withdraw(BigDecimal amount) {
-        validateAmount(amount);
-        BigDecimal newBalance = this.balance.subtract(amount);
-        validateSufficientFunds(newBalance, amount);
-        this.balance = newBalance;
-    }
+    /**
+     * Gets the account type (CURRENT or SAVINGS).
+     */
+    AccountType getAccountType();
 
-    private void validateAmount(BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be positive and not null");
-        }
-    }
+    /**
+     * Deposits money into the account.
+     *
+     * @param amount the amount to deposit (must be positive)
+     * @throws IllegalArgumentException if amount is null or not positive
+     */
+    void deposit(BigDecimal amount);
 
-    private void validateSufficientFunds(BigDecimal newBalance, BigDecimal amount) {
-        BigDecimal minAllowedBalance = overdraftLimit != null
-                ? overdraftLimit.negate()
-                : BigDecimal.ZERO;
+    /**
+     * Withdraws money from the account.
+     *
+     * @param amount the amount to withdraw (must be positive)
+     * @throws IllegalArgumentException if amount is null, not positive, or insufficient funds
+     */
+    void withdraw(BigDecimal amount);
 
-        if (newBalance.compareTo(minAllowedBalance) < 0) {
-            throw new IllegalArgumentException(
-                    buildInsufficientFundsMessage(amount)
-            );
-        }
-    }
-
-    private String buildInsufficientFundsMessage(BigDecimal amount) {
-        if (overdraftLimit != null) {
-            BigDecimal available = balance.add(overdraftLimit);
-            return String.format(
-                    "Insufficient funds: withdrawal would exceed overdraft limit of %s. Available: %s, Requested: %s",
-                    overdraftLimit, available, amount
-            );
-        }
-        return String.format("Insufficient funds for withdrawal: %s", amount);
+    /**
+     * Sets the overdraft limit for the account.
+     * By default, this operation is not supported and will throw an exception.
+     * Implementations like CurrentAccount must override this method.
+     *
+     * @param limit the new overdraft limit
+     * @throws UnsupportedOperationException if the account type does not support overdraft
+     */
+    default void setOverdraftLimit(BigDecimal limit) {
+        throw new UnsupportedOperationException("This account type does not support overdraft authorization.");
     }
 }
