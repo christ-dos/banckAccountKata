@@ -1,6 +1,10 @@
 package com.bank.adapter.in.rest.controller;
 
+import com.bank.adapter.in.rest.request.CreateAccountRequest;
+import com.bank.adapter.in.rest.request.DepositRequest;
 import com.bank.adapter.in.rest.request.SetOverdraftLimitRequest;
+import com.bank.adapter.in.rest.request.WithdrawRequest;
+import com.bank.domain.model.AccountType;
 import com.bank.domain.service.AccountService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -26,6 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class SetOverdraftLimitIntegrationTest {
 
+    private static final String EUR = "EUR";
+    private static final String USD = "USD";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -42,10 +49,10 @@ class SetOverdraftLimitIntegrationTest {
     @Test
     void test_setOverdraftLimit_should_configure_overdraft_successfully() throws Exception {
         // Given - Create an account
-        String createRequest = "{\"currency\": \"EUR\"}";
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT, EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createRequest))
+                        .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -70,10 +77,10 @@ class SetOverdraftLimitIntegrationTest {
     @Test
     void test_setOverdraftLimit_should_allow_withdrawal_within_overdraft() throws Exception {
         // Given - Create account and set overdraft
-        String createRequest = "{\"currency\": \"EUR\"}";
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT, EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createRequest))
+                        .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -106,10 +113,10 @@ class SetOverdraftLimitIntegrationTest {
     @Test
     void test_setOverdraftLimit_should_update_existing_overdraft() throws Exception {
         // Given - Create account with overdraft
-        String createRequest = "{\"currency\": \"EUR\"}";
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT, EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createRequest))
+                        .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -135,10 +142,10 @@ class SetOverdraftLimitIntegrationTest {
     @Test
     void test_setOverdraftLimit_should_allow_zero() throws Exception {
         // Given
-        String createRequest = "{\"currency\": \"EUR\"}";
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT, EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createRequest))
+                        .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -175,10 +182,10 @@ class SetOverdraftLimitIntegrationTest {
     })
     void test_setOverdraftLimit_should_return_400_for_invalid_values(String overdraftValue, String scenario) throws Exception {
         // Given
-        String createRequest = "{\"currency\": \"EUR\"}";
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT, EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createRequest))
+                        .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -205,10 +212,10 @@ class SetOverdraftLimitIntegrationTest {
     })
     void test_setOverdraftLimit_should_accept_various_valid_amounts(String overdraftAmount, String description) throws Exception {
         // Given
-        String createRequest = "{\"currency\": \"EUR\"}";
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT, EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createRequest))
+                        .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -230,10 +237,10 @@ class SetOverdraftLimitIntegrationTest {
     @Test
     void test_complete_scenario_with_overdraft_configuration() throws Exception {
         // Given - Create account
-        String createRequest = "{\"currency\": \"USD\"}";
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT, USD);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createRequest))
+                        .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()

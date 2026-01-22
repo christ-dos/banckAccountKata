@@ -1,6 +1,7 @@
 package com.bank.adapter.in.rest.controller;
 
 import com.bank.adapter.in.rest.request.CreateAccountRequest;
+import com.bank.domain.model.AccountType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,14 +28,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 class AccountControllerIntTest {
+    private static final String EUR = "EUR";
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+
 
     // ========================================
     // INTEGRATION TESTS - ONE PER ENDPOINT
@@ -44,7 +47,7 @@ class AccountControllerIntTest {
     @Test
     void test_createAccount_should_work_end_to_end() throws Exception {
         // Given
-        CreateAccountRequest request = new CreateAccountRequest("USD");
+        CreateAccountRequest request = new CreateAccountRequest(AccountType.CURRENT,"USD");
 
         // When / Then - Verify HTTP → Controller → Service → Repository → DB
         mockMvc.perform(post("/v1/accounts")
@@ -56,13 +59,34 @@ class AccountControllerIntTest {
                 .andExpect(header().string("Location", matchesPattern("/v1/accounts/[0-9a-f-]{36}")))
                 .andExpect(jsonPath("$.accountId").isNotEmpty())
                 .andExpect(jsonPath("$.balance").value(0))
-                .andExpect(jsonPath("$.currency").value("USD"));
+                .andExpect(jsonPath("$.currency").value("USD"))
+                .andExpect(jsonPath("$.accountType").value("CURRENT"));
+    }
+
+    @Test
+    void test_createSavingsAccount_should_work_end_to_end() throws Exception {
+        // Given
+        CreateAccountRequest request = new CreateAccountRequest(AccountType.SAVINGS, EUR);
+
+        // When / Then - Verify HTTP → Controller → Service → Repository → DB
+        mockMvc.perform(post("/v1/accounts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
+                .andExpect(header().string("Location", matchesPattern("/v1/accounts/[0-9a-f-]{36}")))
+                .andExpect(jsonPath("$.accountId").isNotEmpty())
+                .andExpect(jsonPath("$.balance").value(0))
+                .andExpect(jsonPath("$.currency").value(EUR))
+                .andExpect(jsonPath("$.accountType").value("SAVINGS"))
+                .andExpect(jsonPath("$.depositLimit").value(22950.00));
     }
 
     @Test
     void test_getAccountDetails_should_work_end_to_end() throws Exception {
         // Given - Create an account first
-        CreateAccountRequest createRequest = new CreateAccountRequest("EUR");
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT,EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -79,13 +103,13 @@ class AccountControllerIntTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accountId").value(accountId))
                 .andExpect(jsonPath("$.balance").value(0))
-                .andExpect(jsonPath("$.currency").value("EUR"));
+                .andExpect(jsonPath("$.currency").value(EUR));
     }
 
     @Test
     void test_deposit_should_work_end_to_end() throws Exception {
         // Given - Create an account first
-        CreateAccountRequest createRequest = new CreateAccountRequest("EUR");
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT,EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -104,13 +128,13 @@ class AccountControllerIntTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accountId").value(accountId))
                 .andExpect(jsonPath("$.balance").value(100.50))
-                .andExpect(jsonPath("$.currency").value("EUR"));
+                .andExpect(jsonPath("$.currency").value(EUR));
     }
 
     @Test
     void test_withdraw_should_work_end_to_end() throws Exception {
         // Given - Create an account and deposit money first
-        CreateAccountRequest createRequest = new CreateAccountRequest("EUR");
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT,EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -135,7 +159,7 @@ class AccountControllerIntTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accountId").value(accountId))
                 .andExpect(jsonPath("$.balance").value(150.00))
-                .andExpect(jsonPath("$.currency").value("EUR"));
+                .andExpect(jsonPath("$.currency").value(EUR));
     }
 
     // ========================================
@@ -147,7 +171,7 @@ class AccountControllerIntTest {
     @Test
     void test_createAccount_should_return_400_when_invalid_currency() throws Exception {
         // Given - Invalid currency format (triggers validation)
-        CreateAccountRequest request = new CreateAccountRequest("invalid");
+        CreateAccountRequest request = new CreateAccountRequest(AccountType.CURRENT,"invalid");
 
         // When / Then - Verify validation error is returned as 400
         mockMvc.perform(post("/v1/accounts")
@@ -175,7 +199,7 @@ class AccountControllerIntTest {
     @Test
     void test_deposit_should_return_400_when_invalid_amount() throws Exception {
         // Given - Create an account first
-        CreateAccountRequest createRequest = new CreateAccountRequest("EUR");
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT,EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -199,7 +223,7 @@ class AccountControllerIntTest {
     @Test
     void test_withdraw_should_return_400_when_insufficient_funds() throws Exception {
         // Given - Create an account with small balance
-        CreateAccountRequest createRequest = new CreateAccountRequest("EUR");
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT, EUR);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))

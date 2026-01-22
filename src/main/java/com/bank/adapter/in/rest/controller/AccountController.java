@@ -8,6 +8,8 @@ import com.bank.adapter.in.rest.request.WithdrawRequest;
 import com.bank.adapter.in.rest.request.SetOverdraftLimitRequest;
 import com.bank.adapter.in.rest.mapper.AccountDtoMapper;
 import com.bank.domain.model.Account;
+import com.bank.domain.model.CurrentAccount;
+import com.bank.domain.model.SavingsAccount;
 import com.bank.domain.service.AccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,26 +35,24 @@ public class AccountController implements ApiDocAccountController {
     @PostMapping
     @Override
     public ResponseEntity<AccountDto> createAccount(@Valid @RequestBody CreateAccountRequest request) {
-        Account account = accountService.createAccount(request.currency());
-        AccountDto accountDto = mapper.toAccountDto(account);
+        Account account = accountService.createAccount(request.accountType(), request.currency());
 
-        log.info("Account created successfully with ID: {}", account.getAccountId());
+        log.info("{} account created successfully with ID: {}", request.accountType(), account.getAccountId());
 
         return ResponseEntity
                 .status(201)
                 .header("Location", "/v1/accounts/" + account.getAccountId())
-                .body(accountDto);
+                .body(toDtoAccount(account));
     }
 
     @GetMapping("/{accountId}")
     @Override
     public ResponseEntity<AccountDto> getAccountDetails(@PathVariable UUID accountId) {
         Account account = accountService.getAccountDetails(accountId);
-        AccountDto accountDto = mapper.toAccountDto(account);
 
         log.info("Account details retrieved for accountId: {}", accountId);
 
-        return ResponseEntity.ok(accountDto);
+        return ResponseEntity.ok(toDtoAccount(account));
     }
 
     @PostMapping("/{accountId}/deposit")
@@ -60,11 +60,11 @@ public class AccountController implements ApiDocAccountController {
     public ResponseEntity<AccountDto> deposit(@PathVariable UUID accountId, @Valid @RequestBody DepositRequest request) {
         accountService.deposit(accountId, request.amount());
         Account updatedAccount = accountService.getAccountDetails(accountId);
-        AccountDto accountDto = mapper.toAccountDto(updatedAccount);
+
 
         log.info("Deposit successful for account: {}", accountId);
 
-        return ResponseEntity.ok(accountDto);
+        return ResponseEntity.ok(toDtoAccount(updatedAccount));
     }
 
     @PostMapping("/{accountId}/withdraw")
@@ -72,11 +72,10 @@ public class AccountController implements ApiDocAccountController {
     public ResponseEntity<AccountDto> withdraw(@PathVariable UUID accountId, @Valid @RequestBody WithdrawRequest request) {
         accountService.withdraw(accountId, request.amount());
         Account updatedAccount = accountService.getAccountDetails(accountId);
-        AccountDto accountDto = mapper.toAccountDto(updatedAccount);
 
         log.info("Withdrawal successful for account: {}", accountId);
 
-        return ResponseEntity.ok(accountDto);
+        return ResponseEntity.ok(toDtoAccount(updatedAccount));
     }
 
     @PutMapping("/{accountId}/overdraft")
@@ -84,10 +83,15 @@ public class AccountController implements ApiDocAccountController {
     public ResponseEntity<AccountDto> setOverdraftLimit(@PathVariable UUID accountId, @Valid @RequestBody SetOverdraftLimitRequest request) {
         accountService.setOverdraftLimit(accountId, request.overdraftLimit());
         Account updatedAccount = accountService.getAccountDetails(accountId);
-        AccountDto accountDto = mapper.toAccountDto(updatedAccount);
 
         log.info("Overdraft limit set to {} for account: {}", request.overdraftLimit(), accountId);
 
-        return ResponseEntity.ok(accountDto);
+        return ResponseEntity.ok(toDtoAccount(updatedAccount));
+    }
+
+    private AccountDto toDtoAccount(Account account) {
+        return account instanceof CurrentAccount ?
+                mapper.toCurrentAccountDto((CurrentAccount) account) :
+                mapper.toSavingsAccountDto((SavingsAccount) account);
     }
 }

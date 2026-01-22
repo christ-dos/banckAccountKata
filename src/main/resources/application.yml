@@ -32,6 +32,12 @@ spring:
 server:
   port: 9090
 
+# Business configuration
+bank:
+  account:
+    savings:
+      default-deposit-limit: 22950  # Livret A standard limit in EUR
+
 loging:
   level:
     com.bank: DEBUG
