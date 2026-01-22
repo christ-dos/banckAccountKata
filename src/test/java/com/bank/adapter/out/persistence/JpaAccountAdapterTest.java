@@ -4,6 +4,8 @@ import com.bank.adapter.out.persistence.entity.AccountEntity;
 import com.bank.adapter.out.persistence.mapper.AccountMapper;
 import com.bank.adapter.out.persistence.repository.AccountRepository;
 import com.bank.domain.model.Account;
+import com.bank.domain.model.AccountType;
+import com.bank.domain.model.CurrentAccount;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,18 +37,19 @@ class JpaAccountAdapterTest {
     @InjectMocks
     private JpaAccountAdapter jpaAccountAdapter;
 
-    private Account testAccount;
+    private CurrentAccount testAccount;
     private AccountEntity testEntity;
     private UUID testAccountId;
 
     @BeforeEach
     void setUp() {
         testAccountId = UUID.randomUUID();
-        testAccount = new Account(
+        testAccount = new CurrentAccount(
                 testAccountId,
                 new BigDecimal("100.00"),
                 "EUR",
                 OffsetDateTime.now(),
+                AccountType.CURRENT,
                 null
         );
         testEntity = AccountEntity.builder()
@@ -54,6 +57,7 @@ class JpaAccountAdapterTest {
                 .balance(new BigDecimal("100.00"))
                 .currency("EUR")
                 .createdAt(OffsetDateTime.now())
+                .accountType(AccountType.CURRENT)
                 .build();
     }
 
@@ -64,34 +68,35 @@ class JpaAccountAdapterTest {
     @Test
     void test_save_should_persist_account_successfully() {
         // Given / When
-        when(accountMapper.toAccountEntity(testAccount)).thenReturn(testEntity);
+        when(accountMapper.toCurrentAccountEntity(testAccount)).thenReturn(testEntity);
         when(accountRepository.save(testEntity)).thenReturn(testEntity);
-        when(accountMapper.toAccountDomain(testEntity)).thenReturn(testAccount);
+        when(accountMapper.toCurrentAccountDomain(testEntity)).thenReturn(testAccount);
         Account savedAccount = jpaAccountAdapter.save(testAccount);
 
         // Then
         assertNotNull(savedAccount);
         assertEquals(testAccountId, savedAccount.getAccountId());
-        verify(accountMapper).toAccountEntity(testAccount);
+        verify(accountMapper).toCurrentAccountEntity(testAccount);
         verify(accountRepository).save(testEntity);
-        verify(accountMapper).toAccountDomain(testEntity);
+        verify(accountMapper).toCurrentAccountDomain(testEntity);
     }
 
     @Test
     void test_save_should_handle_new_account() {
         // Given
-        Account newAccount = Account.create("USD");
+        CurrentAccount newAccount = CurrentAccount.create("USD");
         AccountEntity newEntity = AccountEntity.builder()
                 .accountId(newAccount.getAccountId())
                 .balance(BigDecimal.ZERO)
                 .currency("USD")
                 .createdAt(newAccount.getCreatedAt())
+                .accountType(AccountType.CURRENT)
                 .build();
 
         // When
-        when(accountMapper.toAccountEntity(newAccount)).thenReturn(newEntity);
+        when(accountMapper.toCurrentAccountEntity(newAccount)).thenReturn(newEntity);
         when(accountRepository.save(newEntity)).thenReturn(newEntity);
-        when(accountMapper.toAccountDomain(newEntity)).thenReturn(newAccount);
+        when(accountMapper.toCurrentAccountDomain(newEntity)).thenReturn(newAccount);
 
         Account savedAccount = jpaAccountAdapter.save(newAccount);
 
@@ -105,11 +110,12 @@ class JpaAccountAdapterTest {
     @Test
     void test_save_should_update_existing_account() {
         // Given
-        Account updatedAccount = new Account(
+        CurrentAccount updatedAccount = new CurrentAccount(
                 testAccountId,
                 new BigDecimal("250.00"),
                 "EUR",
                 testAccount.getCreatedAt(),
+                AccountType.CURRENT,
                 null
         );
         AccountEntity updatedEntity = AccountEntity.builder()
@@ -117,12 +123,13 @@ class JpaAccountAdapterTest {
                 .balance(new BigDecimal("250.00"))
                 .currency("EUR")
                 .createdAt(testAccount.getCreatedAt())
+                .accountType(AccountType.CURRENT)
                 .build();
 
         // When
-        when(accountMapper.toAccountEntity(updatedAccount)).thenReturn(updatedEntity);
+        when(accountMapper.toCurrentAccountEntity(updatedAccount)).thenReturn(updatedEntity);
         when(accountRepository.save(updatedEntity)).thenReturn(updatedEntity);
-        when(accountMapper.toAccountDomain(updatedEntity)).thenReturn(updatedAccount);
+        when(accountMapper.toCurrentAccountDomain(updatedEntity)).thenReturn(updatedAccount);
         Account savedAccount = jpaAccountAdapter.save(updatedAccount);
 
         // Then
@@ -139,7 +146,7 @@ class JpaAccountAdapterTest {
     void test_findById_should_return_account_when_exists() {
         // Given / When
         when(accountRepository.findById(testAccountId)).thenReturn(Optional.of(testEntity));
-        when(accountMapper.toAccountDomain(testEntity)).thenReturn(testAccount);
+        when(accountMapper.toCurrentAccountDomain(testEntity)).thenReturn(testAccount);
         Optional<Account> foundAccount = jpaAccountAdapter.findById(testAccountId);
 
         // Then
@@ -147,7 +154,7 @@ class JpaAccountAdapterTest {
         assertEquals(testAccountId, foundAccount.get().getAccountId());
         assertEquals(new BigDecimal("100.00"), foundAccount.get().getBalance());
         verify(accountRepository).findById(testAccountId);
-        verify(accountMapper).toAccountDomain(testEntity);
+        verify(accountMapper).toCurrentAccountDomain(testEntity);
     }
 
     @Test
@@ -162,7 +169,7 @@ class JpaAccountAdapterTest {
         // Then
         assertFalse(foundAccount.isPresent());
         verify(accountRepository).findById(nonExistentId);
-        verify(accountMapper, never()).toAccountDomain(any());
+        verifyNoInteractions(accountMapper);
     }
 
     // ========================================
@@ -172,9 +179,10 @@ class JpaAccountAdapterTest {
     @Test
     void test_save_and_find_integration_scenario() {
         // Given / When - Save
-        when(accountMapper.toAccountEntity(testAccount)).thenReturn(testEntity);
+        testEntity.setAccountType(AccountType.CURRENT);
+        when(accountMapper.toCurrentAccountEntity(testAccount)).thenReturn(testEntity);
         when(accountRepository.save(testEntity)).thenReturn(testEntity);
-        when(accountMapper.toAccountDomain(testEntity)).thenReturn(testAccount);
+        when(accountMapper.toCurrentAccountDomain(testEntity)).thenReturn(testAccount);
         Account savedAccount = jpaAccountAdapter.save(testAccount);
 
         // Then - Save

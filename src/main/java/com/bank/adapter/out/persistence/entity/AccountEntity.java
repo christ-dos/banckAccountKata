@@ -1,5 +1,6 @@
 package com.bank.adapter.out.persistence.entity;
 
+import com.bank.domain.model.AccountType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,4 +39,11 @@ public class AccountEntity {
 
     @Column(name = "overdraft_limit", precision = 19, scale = 2)
     private BigDecimal overdraftLimit;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_type", nullable = false, length = 20)
+    private AccountType accountType;
+
+    @Column(name = "deposit_limit", precision = 19, scale = 2)
+    private BigDecimal depositLimit;
 }
