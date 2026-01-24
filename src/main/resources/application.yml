@@ -9,6 +9,12 @@ spring:
     username: sa
     password:
 
+  # Force UTC timezone for all dates
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
+
   h2:
     console:
       enabled: true
@@ -38,8 +44,12 @@ bank:
     savings:
       default-deposit-limit: 22950  # Livret A standard limit in EUR
 
-loging:
+# Logging configuration
+logging:
   level:
-    com.bank: DEBUG
-    org.springframework.web: INFO
-    org.hibernate: INFO
+    root: INFO                           # Default level for all packages
+    com.bank: DEBUG                      # Your application code (DEBUG in dev, INFO in prod)
+    org.springframework.web: INFO        # HTTP requests logging
+    org.springframework.data: INFO       # Spring Data operations
+    org.hibernate.SQL: DEBUG             # Show SQL queries (DEBUG in dev, INFO in prod)
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # Show SQL parameters
