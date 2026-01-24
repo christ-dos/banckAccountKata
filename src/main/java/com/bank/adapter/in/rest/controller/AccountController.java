@@ -2,21 +2,26 @@ package com.bank.adapter.in.rest.controller;
 
 import com.bank.adapter.in.rest.api.ApiDocAccountController;
 import com.bank.adapter.in.rest.dto.AccountDto;
+import com.bank.adapter.in.rest.dto.AccountStatementDto;
 import com.bank.adapter.in.rest.request.CreateAccountRequest;
 import com.bank.adapter.in.rest.request.DepositRequest;
 import com.bank.adapter.in.rest.request.WithdrawRequest;
 import com.bank.adapter.in.rest.request.SetOverdraftLimitRequest;
 import com.bank.adapter.in.rest.mapper.AccountDtoMapper;
+import com.bank.adapter.in.rest.mapper.AccountStatementDtoMapper;
 import com.bank.domain.model.Account;
+import com.bank.domain.model.AccountStatement;
 import com.bank.domain.model.CurrentAccount;
 import com.bank.domain.model.SavingsAccount;
 import com.bank.domain.service.AccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -31,6 +36,7 @@ public class AccountController implements ApiDocAccountController {
 
     private final AccountService accountService;
     private final AccountDtoMapper mapper;
+    private final AccountStatementDtoMapper statementMapper;
 
     @PostMapping
     @Override
@@ -87,6 +93,23 @@ public class AccountController implements ApiDocAccountController {
         log.info("Overdraft limit set to {} for account: {}", request.overdraftLimit(), accountId);
 
         return ResponseEntity.ok(toDtoAccount(updatedAccount));
+    }
+
+    @GetMapping("/{accountId}/statement")
+    public ResponseEntity<AccountStatementDto> getAccountStatement(
+            @PathVariable UUID accountId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        AccountStatement statement = accountService.getAccountStatement(accountId, startDate, endDate, page, size);
+        AccountStatementDto statementDto = statementMapper.toAccountStatementDto(statement);
+
+        log.info("Account statement retrieved for accountId: {} (period: {} to {})",
+                accountId, statementDto.periodStart(), statementDto.periodEnd());
+
+        return ResponseEntity.ok(statementDto);
     }
 
     private AccountDto toDtoAccount(Account account) {

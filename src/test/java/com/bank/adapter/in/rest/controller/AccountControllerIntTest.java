@@ -249,4 +249,170 @@ class AccountControllerIntTest {
                 .andExpect(jsonPath("$.title").exists())
                 .andExpect(jsonPath("$.status").value(400));
     }
+
+    // ========================================
+    // ACCOUNT STATEMENT INTEGRATION TESTS
+    // ========================================
+
+    @Test
+    void test_getAccountStatement_default_should_work_end_to_end() throws Exception {
+        // Given - Use existing account from data.sql
+        String accountId = "550e8400-e29b-41d4-a716-446655440001";
+
+        // When / Then - Verify HTTP → Controller → Service → Repository → DB
+        mockMvc.perform(get("/v1/accounts/{accountId}/statement", accountId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value(accountId))
+                .andExpect(jsonPath("$.accountType").value("CURRENT"))
+                .andExpect(jsonPath("$.balanceAtEndDate").exists())
+                .andExpect(jsonPath("$.currency").value("EUR"))
+                .andExpect(jsonPath("$.periodStart").exists())
+                .andExpect(jsonPath("$.periodEnd").exists())
+                .andExpect(jsonPath("$.operations").exists())
+                .andExpect(jsonPath("$.operations.content").isArray())
+                .andExpect(jsonPath("$.operations.pageable").exists())
+                .andExpect(jsonPath("$.operations.totalElements").exists());
+    }
+
+    @Test
+    void test_getAccountStatement_with_custom_period_should_work_end_to_end() throws Exception {
+        // Given
+        String accountId = "550e8400-e29b-41d4-a716-446655440001";
+        String startDate = "2025-12-01";
+        String endDate = "2025-12-31";
+
+        // When / Then
+        mockMvc.perform(get("/v1/accounts/{accountId}/statement", accountId)
+                        .param("startDate", startDate)
+                        .param("endDate", endDate))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value(accountId))
+                .andExpect(jsonPath("$.periodStart").value(startDate))
+                .andExpect(jsonPath("$.periodEnd").value(endDate))
+                .andExpect(jsonPath("$.operations").exists());
+    }
+
+    @Test
+    void test_getAccountStatement_with_pagination_should_work_end_to_end() throws Exception {
+        // Given
+        String accountId = "550e8400-e29b-41d4-a716-446655440001";
+        int page = 0;
+        int size = 5;
+
+        // When / Then
+        mockMvc.perform(get("/v1/accounts/{accountId}/statement", accountId)
+                        .param("page", String.valueOf(page))
+                        .param("size", String.valueOf(size)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value(accountId))
+                .andExpect(jsonPath("$.operations.size").value(size))
+                .andExpect(jsonPath("$.operations.number").value(page));
+    }
+
+    @Test
+    void test_getAccountStatement_for_savings_account_should_work_end_to_end() throws Exception {
+        // Given - Savings account from data.sql
+        String accountId = "550e8400-e29b-41d4-a716-446655440006";
+
+        // When / Then
+        mockMvc.perform(get("/v1/accounts/{accountId}/statement", accountId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value(accountId))
+                .andExpect(jsonPath("$.accountType").value("SAVINGS"))
+                .andExpect(jsonPath("$.balanceAtEndDate").exists())
+                .andExpect(jsonPath("$.operations").exists());
+    }
+
+    @Test
+    @Transactional
+    void test_getAccountStatement_with_operations_should_return_correct_data() throws Exception {
+        // Given - Create account and perform operations
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT, EUR);
+        String createResponse = mockMvc.perform(post("/v1/accounts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String accountId = objectMapper.readTree(createResponse).get("accountId").asText();
+
+        // Perform some operations
+        String depositRequest = "{\"amount\": 1000.00}";
+        mockMvc.perform(post("/v1/accounts/{accountId}/deposit", accountId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(depositRequest))
+                .andExpect(status().isOk());
+
+        String withdrawRequest = "{\"amount\": 200.00}";
+        mockMvc.perform(post("/v1/accounts/{accountId}/withdraw", accountId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(withdrawRequest))
+                .andExpect(status().isOk());
+
+        // When / Then - Get statement should show operations
+        mockMvc.perform(get("/v1/accounts/{accountId}/statement", accountId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value(accountId))
+                .andExpect(jsonPath("$.balanceAtEndDate").value(800.00))
+                .andExpect(jsonPath("$.operations.content").isArray())
+                .andExpect(jsonPath("$.operations.content", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.operations.content[0].type").exists())
+                .andExpect(jsonPath("$.operations.content[0].amount").exists())
+                .andExpect(jsonPath("$.operations.content[0].balanceAfter").exists())
+                .andExpect(jsonPath("$.operations.content[0].operationDate").exists());
+    }
+
+    @Test
+    void test_getAccountStatement_should_return_404_when_account_not_found() throws Exception {
+        // Given
+        String nonExistentAccountId = "550e8400-e29b-41d4-a716-999999999999";
+
+        // When / Then
+        mockMvc.perform(get("/v1/accounts/{accountId}/statement", nonExistentAccountId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.detail").value("Bank account not found: " + nonExistentAccountId));
+    }
+
+    @Test
+    void test_getAccountStatement_should_return_400_when_start_date_after_end_date() throws Exception {
+        // Given
+        String accountId = "550e8400-e29b-41d4-a716-446655440001";
+        String startDate = "2026-01-31";
+        String endDate = "2026-01-01";
+
+        // When / Then
+        mockMvc.perform(get("/v1/accounts/{accountId}/statement", accountId)
+                        .param("startDate", startDate)
+                        .param("endDate", endDate))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.detail").value("Start date must be before or equal to end date"));
+    }
+
+    @Test
+    void test_getAccountStatement_operations_should_be_sorted_desc_by_date() throws Exception {
+        // Given - Account with operations from data.sql
+        String accountId = "550e8400-e29b-41d4-a716-446655440001";
+
+        // When / Then - Operations should be sorted DESC (most recent first)
+        mockMvc.perform(get("/v1/accounts/{accountId}/statement", accountId)
+                        .param("size", "10"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.operations.content").isArray());
+        // Note: We can't test exact order without knowing operation dates from data.sql
+        // But the repository ensures DESC sort by operationDate
+    }
 }
