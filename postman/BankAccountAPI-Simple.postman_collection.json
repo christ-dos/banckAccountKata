@@ -237,6 +237,80 @@
       ]
     },
     {
+      "name": "9. ACCOUNT STATEMENT - Relevé de compte",
+      "description": "Consulter l'historique des opérations d'un compte",
+      "item": [
+        {
+          "name": "Get Statement #1 (Default 30 days)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440001/statement",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "accounts", "550e8400-e29b-41d4-a716-446655440001", "statement"]
+            },
+            "description": "Relevé par défaut : 30 derniers jours"
+          }
+        },
+        {
+          "name": "Get Statement #1 (Custom Period)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440001/statement?startDate=2025-12-01&endDate=2025-12-31",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "accounts", "550e8400-e29b-41d4-a716-446655440001", "statement"],
+              "query": [
+                {"key": "startDate", "value": "2025-12-01"},
+                {"key": "endDate", "value": "2025-12-31"}
+              ]
+            },
+            "description": "Relevé pour décembre 2025"
+          }
+        },
+        {
+          "name": "Get Statement #1 (With Pagination)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440001/statement?page=0&size=10",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "accounts", "550e8400-e29b-41d4-a716-446655440001", "statement"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "10"}
+              ]
+            },
+            "description": "Relevé avec pagination : 10 opérations par page"
+          }
+        },
+        {
+          "name": "Get Statement #6 (Savings Account)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440006/statement",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "accounts", "550e8400-e29b-41d4-a716-446655440006", "statement"]
+            },
+            "description": "Relevé d'un livret d'épargne"
+          }
+        }
+      ]
+    },
+    {
       "name": "8. ERROR CASES - Cas d'erreur",
       "item": [
         {
