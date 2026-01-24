@@ -1,10 +1,10 @@
 package com.bank.domain.service;
 
+import com.bank.domain.config.BankAccountProperties;
 import com.bank.domain.exception.BankAccountNotFoundException;
-import com.bank.domain.model.Account;
-import com.bank.domain.model.AccountType;
-import com.bank.domain.model.CurrentAccount;
+import com.bank.domain.model.*;
 import com.bank.domain.port.out.AccountPort;
+import com.bank.domain.port.out.OperationPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,9 +16,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -35,6 +39,12 @@ class AccountServiceTest {
 
     @Mock
     private AccountPort accountPort;
+
+    @Mock
+    private OperationPort operationPort;
+
+    @Mock
+    private BankAccountProperties bankAccountProperties;
 
     @InjectMocks
     private AccountService accountService;
@@ -449,5 +459,155 @@ class AccountServiceTest {
         Account savedAccount = accountCaptor.getValue();
         assertTrue(savedAccount instanceof CurrentAccount);
         assertEquals(overdraftLimit, ((CurrentAccount) savedAccount).getOverdraftLimit());
+    }
+
+    // ========================================
+    // TESTS FOR GET ACCOUNT STATEMENT
+    // ========================================
+
+    @Test
+    void getAccountStatement_shouldReturnStatement_whenValidPeriod() {
+        // Given
+        Account account = CurrentAccount.create("EUR");
+        UUID accountId = account.getAccountId();
+        LocalDate startDate = LocalDate.of(2026, 1, 1);
+        LocalDate endDate = LocalDate.of(2026, 1, 31);
+
+        Operation operation1 = Operation.create(accountId, OperationType.DEPOSIT, new BigDecimal("100"), new BigDecimal("1100"));
+        Operation operation2 = Operation.create(accountId, OperationType.WITHDRAW, new BigDecimal("50"), new BigDecimal("1050"));
+        Page<Operation> operations = new PageImpl<>(List.of(operation1, operation2));
+
+        when(accountPort.findById(accountId)).thenReturn(Optional.of(account));
+        when(operationPort.findByAccountIdAndPeriod(accountId, startDate, endDate, 0, 20))
+                .thenReturn(operations);
+
+        // When
+        AccountStatement result = accountService.getAccountStatement(accountId, startDate, endDate, 0, 20);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(accountId, result.accountId());
+        assertEquals(AccountType.CURRENT, result.accountType());
+        assertEquals(startDate, result.periodStart());
+        assertEquals(endDate, result.periodEnd());
+        assertEquals(2, result.operations().getTotalElements());
+        verify(accountPort).findById(accountId);
+        verify(operationPort).findByAccountIdAndPeriod(accountId, startDate, endDate, 0, 20);
+    }
+
+    @Test
+    void getAccountStatement_shouldUseDefaultPeriod_whenDatesAreNull() {
+        // Given
+        UUID accountId = UUID.randomUUID();
+        Account account = CurrentAccount.create("EUR");
+        Page<Operation> operations = Page.empty();
+
+        when(accountPort.findById(accountId)).thenReturn(Optional.of(account));
+        when(operationPort.findByAccountIdAndPeriod(eq(accountId), any(LocalDate.class), any(LocalDate.class), eq(0), eq(20)))
+                .thenReturn(operations);
+
+        // When
+        AccountStatement result = accountService.getAccountStatement(accountId, null, null, 0, 20);
+
+        // Then
+        assertNotNull(result);
+        assertNotNull(result.periodStart());
+        assertNotNull(result.periodEnd());
+        verify(operationPort).findByAccountIdAndPeriod(eq(accountId), any(LocalDate.class), any(LocalDate.class), eq(0), eq(20));
+    }
+
+    @Test
+    void getAccountStatement_shouldThrowException_whenAccountNotFound() {
+        // Given
+        UUID accountId = UUID.randomUUID();
+        when(accountPort.findById(accountId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(BankAccountNotFoundException.class, () ->
+                accountService.getAccountStatement(accountId, LocalDate.now(), LocalDate.now(), 0, 20)
+        );
+    }
+
+    @Test
+    void getAccountStatement_shouldThrowException_whenStartDateAfterEndDate() {
+        // Given
+        UUID accountId = UUID.randomUUID();
+        Account account = CurrentAccount.create("EUR");
+        LocalDate startDate = LocalDate.of(2026, 1, 31);
+        LocalDate endDate = LocalDate.of(2026, 1, 1);
+
+        when(accountPort.findById(accountId)).thenReturn(Optional.of(account));
+
+        // When & Then
+        assertThrows(IllegalArgumentException.class, () ->
+                accountService.getAccountStatement(accountId, startDate, endDate, 0, 20)
+        );
+    }
+
+    @Test
+    void getAccountStatement_shouldCalculateBalanceFromOperations_whenPeriodIsInPast() {
+        // Given
+        UUID accountId = UUID.randomUUID();
+        Account account = CurrentAccount.create("EUR");
+        LocalDate startDate = LocalDate.of(2025, 12, 1);
+        LocalDate endDate = LocalDate.of(2025, 12, 31);
+
+        Operation lastOperation = Operation.create(accountId, OperationType.DEPOSIT, new BigDecimal("100"), new BigDecimal("1500"));
+        Page<Operation> operations = new PageImpl<>(List.of(lastOperation));
+
+        when(accountPort.findById(accountId)).thenReturn(Optional.of(account));
+        when(operationPort.findByAccountIdAndPeriod(accountId, startDate, endDate, 0, 20))
+                .thenReturn(operations);
+
+        // When
+        AccountStatement result = accountService.getAccountStatement(accountId, startDate, endDate, 0, 20);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(new BigDecimal("1500"), result.balanceAtEndDate()); // Balance from last operation
+    }
+
+    @Test
+    void getAccountStatement_shouldReturnCurrentBalance_whenNoOperationsInPeriod() {
+        // Given
+        UUID accountId = UUID.randomUUID();
+        CurrentAccount account = CurrentAccount.create("EUR");
+        account.deposit(new BigDecimal("1000"));
+        LocalDate startDate = LocalDate.of(2026, 1, 1);
+        LocalDate endDate = LocalDate.of(2026, 1, 31);
+
+        Page<Operation> operations = Page.empty();
+
+        when(accountPort.findById(accountId)).thenReturn(Optional.of(account));
+        when(operationPort.findByAccountIdAndPeriod(accountId, startDate, endDate, 0, 20))
+                .thenReturn(operations);
+
+        // When
+        AccountStatement result = accountService.getAccountStatement(accountId, startDate, endDate, 0, 20);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(account.getBalance(), result.balanceAtEndDate());
+    }
+
+    @Test
+    void getAccountStatement_shouldWorkForSavingsAccount() {
+        // Given
+        UUID accountId = UUID.randomUUID();
+        Account account = SavingsAccount.create("EUR", new BigDecimal("3000"));
+        LocalDate startDate = LocalDate.of(2026, 1, 1);
+        LocalDate endDate = LocalDate.of(2026, 1, 31);
+        Page<Operation> operations = Page.empty();
+
+        when(accountPort.findById(accountId)).thenReturn(Optional.of(account));
+        when(operationPort.findByAccountIdAndPeriod(accountId, startDate, endDate, 0, 20))
+                .thenReturn(operations);
+
+        // When
+        AccountStatement result = accountService.getAccountStatement(accountId, startDate, endDate, 0, 20);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(AccountType.SAVINGS, result.accountType());
     }
 }
