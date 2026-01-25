@@ -415,4 +415,34 @@ class AccountControllerIntTest {
         // Note: We can't test exact order without knowing operation dates from data.sql
         // But the repository ensures DESC sort by operationDate
     }
+
+    @Test
+    void test_createAccount_should_return_400_when_currency_invalid_size() throws Exception {
+        // Given - Invalid currency size (must be exactly 3 characters)
+        String invalidJson = "{\"accountType\": \"CURRENT\", \"currency\": \"US\"}";
+
+        // When / Then - Verify MethodArgumentNotValidException is handled
+        mockMvc.perform(post("/v1/accounts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validation Error"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    void test_createAccount_should_return_400_when_currency_invalid_pattern() throws Exception {
+        // Given - Invalid currency pattern (must be 3 uppercase letters)
+        String invalidJson = "{\"accountType\": \"CURRENT\", \"currency\": \"us1\"}";
+
+        // When / Then - Verify MethodArgumentNotValidException is handled
+        mockMvc.perform(post("/v1/accounts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validation Error"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
 }

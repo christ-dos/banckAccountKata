@@ -1,9 +1,7 @@
 package com.bank.adapter.in.rest.controller;
 
 import com.bank.adapter.in.rest.request.CreateAccountRequest;
-import com.bank.adapter.in.rest.request.DepositRequest;
 import com.bank.adapter.in.rest.request.SetOverdraftLimitRequest;
-import com.bank.adapter.in.rest.request.WithdrawRequest;
 import com.bank.domain.model.AccountType;
 import com.bank.domain.service.AccountService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,7 +19,8 @@ import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Integration tests for setOverdraftLimit endpoint.
@@ -43,13 +42,14 @@ class SetOverdraftLimitIntegrationTest {
     private AccountService accountService;
 
     // ========================================
-    // OVERDRAFT LIMIT CONFIGURATION TESTS
+    // HELPER METHODS
     // ========================================
 
-    @Test
-    void test_setOverdraftLimit_should_configure_overdraft_successfully() throws Exception {
-        // Given - Create an account
-        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.CURRENT, EUR);
+    /**
+     * Helper method to create an account and return its ID.
+     */
+    private String createAccount(AccountType accountType, String currency) throws Exception {
+        CreateAccountRequest createRequest = new CreateAccountRequest(accountType, currency);
         String createResponse = mockMvc.perform(post("/v1/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -58,7 +58,17 @@ class SetOverdraftLimitIntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        String accountId = objectMapper.readTree(createResponse).get("accountId").asText();
+        return objectMapper.readTree(createResponse).get("accountId").asText();
+    }
+
+    // ========================================
+    // OVERDRAFT LIMIT CONFIGURATION TESTS
+    // ========================================
+
+    @Test
+    void test_setOverdraftLimit_should_configure_overdraft_successfully() throws Exception {
+        // Given - Create an account
+        String accountId = createAccount(AccountType.CURRENT, EUR);
 
         // When - Set overdraft limit
         SetOverdraftLimitRequest overdraftRequest = new SetOverdraftLimitRequest(new BigDecimal("100.00"));
@@ -173,6 +183,31 @@ class SetOverdraftLimitIntegrationTest {
                         .content("{\"overdraftLimit\": 100.00}"))
                 .andDo(print())
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void test_setOverdraftLimit_should_return_400_for_savings_account() throws Exception {
+        // Given - Create a SAVINGS account
+        CreateAccountRequest createRequest = new CreateAccountRequest(AccountType.SAVINGS, EUR);
+        String createResponse = mockMvc.perform(post("/v1/accounts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String accountId = objectMapper.readTree(createResponse).get("accountId").asText();
+
+        // When & Then - Savings accounts don't support overdraft (UnsupportedOperationException)
+        mockMvc.perform(put("/v1/accounts/" + accountId + "/overdraft")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"overdraftLimit\": 100.00}"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Unsupported Operation"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.detail").value("Savings accounts cannot have overdraft authorization"));
     }
 
     @ParameterizedTest(name = "Invalid overdraft: {1}")
