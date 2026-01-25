@@ -2,23 +2,21 @@ spring:
   application:
     name: bank-account-api
 
-  # Configuration H2 pour le développement
   datasource:
     url: jdbc:h2:mem:bankdb
     driver-class-name: org.h2.Driver
     username: sa
     password:
 
-  # Force UTC timezone for all dates
-  jackson:
-    time-zone: UTC
-    serialization:
-      write-dates-as-timestamps: false
-
   h2:
     console:
       enabled: true
       path: /h2-console
+
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
 
   jpa:
     hibernate:
@@ -27,10 +25,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    # Important : Permet à Hibernate de créer les tables AVANT d'exécuter data.sql
     defer-datasource-initialization: true
 
-  # Initialisation des données de test au démarrage
   sql:
     init:
       mode: always
@@ -42,14 +38,14 @@ server:
 bank:
   account:
     savings:
-      default-deposit-limit: 22950  # Livret A standard limit in EUR
+      default-deposit-limit: 22950
 
 # Logging configuration
 logging:
   level:
-    root: INFO                           # Default level for all packages
-    com.bank: DEBUG                      # Your application code (DEBUG in dev, INFO in prod)
-    org.springframework.web: INFO        # HTTP requests logging
-    org.springframework.data: INFO       # Spring Data operations
-    org.hibernate.SQL: DEBUG             # Show SQL queries (DEBUG in dev, INFO in prod)
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # Show SQL parameters
+    root: INFO
+    com.bank: DEBUG
+    org.springframework.web: INFO
+    org.springframework.data: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

@@ -12,6 +12,12 @@ import java.util.TimeZone;
 @SpringBootApplication
 public class BankAccountApplication {
 
+    /**
+     * Application entry point.
+     * Sets UTC as default timezone to ensure consistent date/time handling across environments.
+     *
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
         SpringApplication.run(BankAccountApplication.class, args);

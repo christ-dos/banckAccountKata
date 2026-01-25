@@ -9,9 +9,6 @@ import org.springframework.stereotype.Repository;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-/**
- * Spring Data JPA repository for OperationEntity.
- */
 @Repository
 public interface OperationRepository extends JpaRepository<OperationEntity, UUID> {
 

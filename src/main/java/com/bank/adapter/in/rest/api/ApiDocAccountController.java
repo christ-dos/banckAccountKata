@@ -1,6 +1,7 @@
 package com.bank.adapter.in.rest.api;
 
 import com.bank.adapter.in.rest.dto.AccountDto;
+import com.bank.adapter.in.rest.dto.AccountStatementDto;
 import com.bank.adapter.in.rest.request.CreateAccountRequest;
 import com.bank.adapter.in.rest.request.DepositRequest;
 import com.bank.adapter.in.rest.request.WithdrawRequest;
@@ -132,5 +133,33 @@ public interface ApiDocAccountController {
             @Parameter(description = "Account ID", required = true)
             @PathVariable UUID accountId,
             @Valid @RequestBody SetOverdraftLimitRequest request
+    );
+
+    @Operation(
+            summary = "Get account statement",
+            description = "Retrieves the monthly statement for an account with transaction history. You can filter by date range and paginate results."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Statement retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = com.bank.adapter.in.rest.dto.AccountStatementDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Account not found"
+            )
+    })
+    ResponseEntity<AccountStatementDto> getAccountStatement(
+            @Parameter(description = "Account ID", required = true)
+            @PathVariable UUID accountId,
+            @Parameter(description = "Start date for statement period (format: yyyy-MM-dd)")
+            java.time.LocalDate startDate,
+            @Parameter(description = "End date for statement period (format: yyyy-MM-dd)")
+            java.time.LocalDate endDate,
+            @Parameter(description = "Page number (0-based)", example = "0")
+            int page,
+            @Parameter(description = "Page size", example = "20")
+            int size
     );
 }

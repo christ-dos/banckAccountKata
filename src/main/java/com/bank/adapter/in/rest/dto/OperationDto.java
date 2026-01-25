@@ -6,9 +6,6 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-/**
- * DTO representing an operation for API responses.
- */
 public record OperationDto(
         UUID operationId,
         UUID accountId,

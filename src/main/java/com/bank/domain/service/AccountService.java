@@ -133,18 +133,7 @@ public class AccountService implements CreateAccountUseCase,
         return statement;
     }
 
-    // ========================================
-    // PRIVATE HELPER METHODS
-    // ========================================
 
-    /**
-     * Builds an Account domain object based on the account type.
-     * This is a private helper method that encapsulates account creation logic.
-     *
-     * @param accountType the type of account (CURRENT or SAVINGS)
-     * @param currency    the account currency
-     * @return the created account (not yet persisted)
-     */
     private Account buildAccount(AccountType accountType, String currency) {
         if (accountType == AccountType.CURRENT) {
             log.info("Creating CURRENT account with currency: {}", currency);
@@ -156,51 +145,20 @@ public class AccountService implements CreateAccountUseCase,
         return SavingsAccount.create(currency, depositLimit);
     }
 
-    /**
-     * Determines the end date for the statement period.
-     * Defaults to current date if not specified.
-     *
-     * @param periodEndDate the requested end date (can be null)
-     * @return the end date (today if null)
-     */
     private LocalDate determineEndDate(LocalDate periodEndDate) {
         return (periodEndDate != null) ? periodEndDate : LocalDate.now();
     }
 
-    /**
-     * Determines the start date for the statement period.
-     * Defaults to 30 days before the end date if not specified.
-     *
-     * @param periodStartDate the requested start date (can be null)
-     * @param endDate the end date of the period
-     * @return the start date (endDate - 30 days if null)
-     */
     private LocalDate determineStartDate(LocalDate periodStartDate, LocalDate endDate) {
         return (periodStartDate != null) ? periodStartDate : endDate.minusDays(30);
     }
 
-    /**
-     * Validates that the start date is not after the end date.
-     *
-     * @param startDate the start date of the period
-     * @param endDate the end date of the period
-     * @throws IllegalArgumentException if start date is after end date
-     */
     private void validatePeriod(LocalDate startDate, LocalDate endDate) {
         if (DateUtils.isStartDateAfterEndDate(startDate, endDate)) {
             throw new IllegalArgumentException("Start date must be before or equal to end date");
         }
     }
 
-    /**
-     * Builds an AccountStatement from account details and operations.
-     *
-     * @param account the account
-     * @param startDate the start date of the period
-     * @param endDate the end date of the period
-     * @param operations the paginated operations (already loaded from DB)
-     * @return the account statement
-     */
     private AccountStatement buildAccountStatement(
             Account account,
             LocalDate startDate,
@@ -220,18 +178,6 @@ public class AccountService implements CreateAccountUseCase,
         );
     }
 
-    /**
-     * Calculates the account balance at the end date using already loaded operations.
-     * This avoids an additional database query.
-     *
-     * If the date is today or in the future, returns the current balance.
-     * Otherwise, uses the balanceAfter from the most recent operation in the loaded list.
-     *
-     * @param account the account
-     * @param endDate the date for which to calculate the balance
-     * @param operations the already loaded operations for this period (sorted DESC)
-     * @return the balance at the specified date
-     */
     private BigDecimal calculateBalanceAtDate(Account account, LocalDate endDate, Page<Operation> operations) {
         if (DateUtils.isDateTodayOrFuture(endDate)) {
             return account.getBalance();
@@ -244,7 +190,6 @@ public class AccountService implements CreateAccountUseCase,
             }
         }
 
-        // No operations in this period, return current account balance
         return account.getBalance();
     }
 }

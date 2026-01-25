@@ -6,7 +6,9 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.math.BigDecimal;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 /**
  * Unit tests for SavingsAccount domain model.
@@ -26,12 +28,12 @@ class SavingsAccountTest {
         SavingsAccount account = SavingsAccount.create(TEST_CURRENCY_EUR, TEST_DEFAULT_DEPOSIT_LIMIT);
 
         // Then
-        assertThat(account).isNotNull();
-        assertThat(account.getAccountId()).isNotNull();
-        assertThat(account.getBalance()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(account.getCurrency()).isEqualTo(TEST_CURRENCY_EUR);
-        assertThat(account.getDepositLimit()).isEqualByComparingTo(TEST_DEFAULT_DEPOSIT_LIMIT);
-        assertThat(account.getCreatedAt()).isNotNull();
+        assertNotNull(account);
+        assertNotNull(account.getAccountId());
+        assertEquals(0, account.getBalance().compareTo(BigDecimal.ZERO));
+        assertEquals(TEST_CURRENCY_EUR, account.getCurrency());
+        assertEquals(0, account.getDepositLimit().compareTo(TEST_DEFAULT_DEPOSIT_LIMIT));
+        assertNotNull(account.getCreatedAt());
     }
 
     @Test
@@ -43,10 +45,10 @@ class SavingsAccountTest {
         SavingsAccount account = SavingsAccount.create("USD", customLimit);
 
         // Then
-        assertThat(account).isNotNull();
-        assertThat(account.getBalance()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(account.getCurrency()).isEqualTo("USD");
-        assertThat(account.getDepositLimit()).isEqualByComparingTo(customLimit);
+        assertNotNull(account);
+        assertEquals(0, account.getBalance().compareTo(BigDecimal.ZERO));
+        assertEquals("USD", account.getCurrency());
+        assertEquals(0, account.getDepositLimit().compareTo(customLimit));
     }
 
     @Test
@@ -55,7 +57,7 @@ class SavingsAccountTest {
         SavingsAccount account = SavingsAccount.create(null, TEST_DEFAULT_DEPOSIT_LIMIT);
 
         // Then
-        assertThat(account.getCurrency()).isEqualTo(TEST_CURRENCY_EUR);
+        assertEquals(TEST_CURRENCY_EUR, account.getCurrency());
     }
 
     @Test
@@ -64,31 +66,31 @@ class SavingsAccountTest {
         SavingsAccount account = SavingsAccount.create("  ", TEST_DEFAULT_DEPOSIT_LIMIT);
 
         // Then
-        assertThat(account.getCurrency()).isEqualTo(TEST_CURRENCY_EUR);
+        assertEquals(TEST_CURRENCY_EUR, account.getCurrency());
     }
 
     @Test
     void test_create_with_null_deposit_limit_should_throw_exception() {
         // Given / When / Then
-        assertThatThrownBy(() -> SavingsAccount.create(TEST_CURRENCY_EUR, null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Deposit limit must be positive");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> SavingsAccount.create(TEST_CURRENCY_EUR, null));
+        assertTrue(exception.getMessage().contains("Deposit limit must be positive"));
     }
 
     @Test
     void test_create_with_zero_deposit_limit_should_throw_exception() {
         // Given / When / Then
-        assertThatThrownBy(() -> SavingsAccount.create(TEST_CURRENCY_EUR, BigDecimal.ZERO))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Deposit limit must be positive");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> SavingsAccount.create(TEST_CURRENCY_EUR, BigDecimal.ZERO));
+        assertTrue(exception.getMessage().contains("Deposit limit must be positive"));
     }
 
     @Test
     void test_create_with_negative_deposit_limit_should_throw_exception() {
         // Given / When / Then
-        assertThatThrownBy(() -> SavingsAccount.create(TEST_CURRENCY_EUR, BigDecimal.valueOf(-1000)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Deposit limit must be positive");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> SavingsAccount.create(TEST_CURRENCY_EUR, BigDecimal.valueOf(-1000)));
+        assertTrue(exception.getMessage().contains("Deposit limit must be positive"));
     }
 
     // ========================================
@@ -111,7 +113,7 @@ class SavingsAccountTest {
         account.deposit(amount);
 
         // Then
-        assertThat(account.getBalance()).isEqualByComparingTo(amount);
+        assertEquals(0, account.getBalance().compareTo(amount));
     }
 
     @Test
@@ -125,7 +127,7 @@ class SavingsAccountTest {
         account.deposit(BigDecimal.valueOf(300));
 
         // Then
-        assertThat(account.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(1000));
+        assertEquals(0, account.getBalance().compareTo(BigDecimal.valueOf(1000)));
     }
 
     @Test
@@ -134,11 +136,11 @@ class SavingsAccountTest {
         SavingsAccount account = SavingsAccount.create(TEST_CURRENCY_EUR, BigDecimal.valueOf(1000));
 
         // When / Then
-        assertThatThrownBy(() -> account.deposit(BigDecimal.valueOf(1500)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Cannot deposit 1500")
-                .hasMessageContaining("would exceed deposit limit of 1000")
-                .hasMessageContaining("Maximum allowed deposit: 1000");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> account.deposit(BigDecimal.valueOf(1500)));
+        assertTrue(exception.getMessage().contains("Cannot deposit 1500"));
+        assertTrue(exception.getMessage().contains("would exceed deposit limit of 1000"));
+        assertTrue(exception.getMessage().contains("Maximum allowed deposit: 1000"));
     }
 
     @Test
@@ -148,10 +150,10 @@ class SavingsAccountTest {
         account.deposit(BigDecimal.valueOf(1000)); // Reach limit
 
         // When / Then
-        assertThatThrownBy(() -> account.deposit(BigDecimal.valueOf(100)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Cannot deposit 100")
-                .hasMessageContaining("deposit limit of 1000 already reached");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> account.deposit(BigDecimal.valueOf(100)));
+        assertTrue(exception.getMessage().contains("Cannot deposit 100"));
+        assertTrue(exception.getMessage().contains("deposit limit of 1000 already reached"));
     }
 
     @Test
@@ -161,9 +163,9 @@ class SavingsAccountTest {
         account.deposit(BigDecimal.valueOf(800)); // 200 remaining
 
         // When / Then
-        assertThatThrownBy(() -> account.deposit(BigDecimal.valueOf(500)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Maximum allowed deposit: 200");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> account.deposit(BigDecimal.valueOf(500)));
+        assertTrue(exception.getMessage().contains("Maximum allowed deposit: 200"));
     }
 
     @ParameterizedTest(name = "Deposit invalid amount {0} should throw exception")
@@ -178,9 +180,9 @@ class SavingsAccountTest {
         BigDecimal amount = "null".equals(amountStr) ? null : new BigDecimal(amountStr);
 
         // When / Then
-        assertThatThrownBy(() -> account.deposit(amount))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining(expectedMessage);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> account.deposit(amount));
+        assertTrue(exception.getMessage().contains(expectedMessage));
     }
 
     // ========================================
@@ -205,7 +207,7 @@ class SavingsAccountTest {
 
         // Then
         BigDecimal expectedBalance = new BigDecimal(initialBalance).subtract(amount);
-        assertThat(account.getBalance()).isEqualByComparingTo(expectedBalance);
+        assertEquals(0, account.getBalance().compareTo(expectedBalance));
     }
 
     @Test
@@ -215,9 +217,9 @@ class SavingsAccountTest {
         account.deposit(BigDecimal.valueOf(100));
 
         // When / Then
-        assertThatThrownBy(() -> account.withdraw(BigDecimal.valueOf(200)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Insufficient funds for withdrawal: 200");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> account.withdraw(BigDecimal.valueOf(200)));
+        assertTrue(exception.getMessage().contains("Insufficient funds for withdrawal: 200"));
     }
 
     @Test
@@ -226,9 +228,9 @@ class SavingsAccountTest {
         SavingsAccount account = SavingsAccount.create(TEST_CURRENCY_EUR, TEST_DEFAULT_DEPOSIT_LIMIT);
 
         // When / Then
-        assertThatThrownBy(() -> account.withdraw(BigDecimal.valueOf(50)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Insufficient funds");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> account.withdraw(BigDecimal.valueOf(50)));
+        assertTrue(exception.getMessage().contains("Insufficient funds"));
     }
 
     @ParameterizedTest(name = "Withdraw invalid amount {0} should throw exception")
@@ -244,9 +246,9 @@ class SavingsAccountTest {
         BigDecimal amount = "null".equals(amountStr) ? null : new BigDecimal(amountStr);
 
         // When / Then
-        assertThatThrownBy(() -> account.withdraw(amount))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining(expectedMessage);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> account.withdraw(amount));
+        assertTrue(exception.getMessage().contains(expectedMessage));
     }
 
     // ========================================
@@ -259,9 +261,9 @@ class SavingsAccountTest {
         SavingsAccount account = SavingsAccount.create(TEST_CURRENCY_EUR, TEST_DEFAULT_DEPOSIT_LIMIT);
 
         // When / Then
-        assertThatThrownBy(() -> account.setOverdraftLimit(BigDecimal.valueOf(500)))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("Savings accounts cannot have overdraft authorization");
+        UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
+                () -> account.setOverdraftLimit(BigDecimal.valueOf(500)));
+        assertTrue(exception.getMessage().contains("Savings accounts cannot have overdraft authorization"));
     }
 
     @Test
@@ -270,9 +272,9 @@ class SavingsAccountTest {
         SavingsAccount account = SavingsAccount.create(TEST_CURRENCY_EUR, TEST_DEFAULT_DEPOSIT_LIMIT);
 
         // When / Then
-        assertThatThrownBy(() -> account.setOverdraftLimit(BigDecimal.ZERO))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("Savings accounts cannot have overdraft authorization");
+        UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class,
+                () -> account.setOverdraftLimit(BigDecimal.ZERO));
+        assertTrue(exception.getMessage().contains("Savings accounts cannot have overdraft authorization"));
     }
 
     // ========================================
@@ -290,19 +292,19 @@ class SavingsAccountTest {
         account.deposit(BigDecimal.valueOf(300)); // Total: 1000 (limit reached)
 
         // Then - Balance is at limit
-        assertThat(account.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(1000));
+        assertEquals(0, account.getBalance().compareTo(BigDecimal.valueOf(1000)));
 
         // When - Withdraw
         account.withdraw(BigDecimal.valueOf(200));
 
         // Then
-        assertThat(account.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(800));
+        assertEquals(0, account.getBalance().compareTo(BigDecimal.valueOf(800)));
 
         // When - Can deposit again (200 available)
         account.deposit(BigDecimal.valueOf(200));
 
         // Then
-        assertThat(account.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(1000));
+        assertEquals(0, account.getBalance().compareTo(BigDecimal.valueOf(1000)));
     }
 }
 

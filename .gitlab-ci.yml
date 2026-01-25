@@ -7,7 +7,6 @@ stages:
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
   MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
-  MIN_COVERAGE: "80"
 cache:
   paths:
     - .m2/repository

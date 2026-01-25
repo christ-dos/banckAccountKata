@@ -71,11 +71,6 @@ public class SavingsAccount implements Account {
         }
     }
 
-    /**
-     * Calculates the remaining deposit capacity before reaching the deposit limit.
-     *
-     * @return the maximum amount that can still be deposited
-     */
     private BigDecimal calculateRemainingDepositCapacity() {
         return depositLimit.subtract(balance);
     }

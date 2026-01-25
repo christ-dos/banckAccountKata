@@ -96,6 +96,7 @@ public class AccountController implements ApiDocAccountController {
     }
 
     @GetMapping("/{accountId}/statement")
+    @Override
     public ResponseEntity<AccountStatementDto> getAccountStatement(
             @PathVariable UUID accountId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,

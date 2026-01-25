@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * JPA adapter for Account persistence operations.
+ */
 @Component
 @RequiredArgsConstructor
 public class JpaAccountAdapter implements AccountPort {

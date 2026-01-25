@@ -9,13 +9,11 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface AccountMapper {
 
-    // CurrentAccount mappings
     @Mapping(target = "depositLimit", ignore = true)
     AccountEntity toCurrentAccountEntity(CurrentAccount account);
 
     CurrentAccount toCurrentAccountDomain(AccountEntity accountEntity);
 
-    // SavingsAccount mappings
     @Mapping(target = "overdraftLimit", ignore = true)
     AccountEntity toSavingsAccountEntity(SavingsAccount account);
 

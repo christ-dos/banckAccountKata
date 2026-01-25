@@ -16,6 +16,12 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Handles BankAccountNotFoundException and returns a 404 NOT FOUND response.
+     *
+     * @param ex the exception
+     * @return ProblemDetail with error information
+     */
     @ExceptionHandler(BankAccountNotFoundException.class)
     public ProblemDetail handleBankAccountNotFoundException(BankAccountNotFoundException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
@@ -27,6 +33,12 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    /**
+     * Handles IllegalArgumentException and returns a 400 BAD REQUEST response.
+     *
+     * @param ex the exception
+     * @return ProblemDetail with error information
+     */
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgumentException(IllegalArgumentException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
@@ -38,6 +50,12 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    /**
+     * Handles UnsupportedOperationException and returns a 400 BAD REQUEST response.
+     *
+     * @param ex the exception
+     * @return ProblemDetail with error information
+     */
     @ExceptionHandler(UnsupportedOperationException.class)
     public ProblemDetail handleUnsupportedOperationException(UnsupportedOperationException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
@@ -49,6 +67,12 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    /**
+     * Handles MethodArgumentNotValidException for validation errors and returns a 400 BAD REQUEST response.
+     *
+     * @param ex the exception
+     * @return ProblemDetail with validation error information
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidationException(MethodArgumentNotValidException ex) {
         String errors = ex.getBindingResult()
@@ -66,6 +90,12 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    /**
+     * Handles all unhandled exceptions and returns a 500 INTERNAL SERVER ERROR response.
+     *
+     * @param ex the exception
+     * @return ProblemDetail with generic error information
+     */
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGenericException(Exception ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(

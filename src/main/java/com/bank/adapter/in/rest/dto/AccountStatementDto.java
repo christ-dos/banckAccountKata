@@ -7,9 +7,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/**
- * DTO representing an account statement for API responses.
- */
 public record AccountStatementDto(
         UUID accountId,
         AccountType accountType,

@@ -18,6 +18,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+/**
+ * JPA adapter for Operation persistence operations.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -34,6 +37,16 @@ public class JpaOperationAdapter implements OperationPort {
     }
 
 
+    /**
+     * Finds operations by account ID and date period with pagination.
+     *
+     * @param accountId the account ID
+     * @param periodStartDate the start date of the period
+     * @param periodEndDate the end date of the period
+     * @param page the page number
+     * @param size the page size
+     * @return Page of operations found
+     */
     @Override
     public Page<Operation> findByAccountIdAndPeriod(UUID accountId, LocalDate periodStartDate, LocalDate periodEndDate, int page, int size) {
         log.debug("Finding operations for account: {} from {} to {} (page={}, size={})",

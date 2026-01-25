@@ -7,21 +7,12 @@ import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 
-/**
- * MapStruct mapper to convert AccountStatement domain objects to DTOs.
- */
 @Mapper(componentModel = "spring")
 public abstract class AccountStatementDtoMapper {
 
     @Autowired
     protected OperationDtoMapper operationDtoMapper;
 
-    /**
-     * Converts an AccountStatement domain object to an AccountStatementDto.
-     *
-     * @param accountStatement the domain object
-     * @return the DTO for the API response
-     */
     public AccountStatementDto toAccountStatementDto(AccountStatement accountStatement) {
         if (accountStatement == null) {
             return null;
