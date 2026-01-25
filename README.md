@@ -304,6 +304,19 @@ docker-compose down
 
 ---
 
+## 🔄 CI/CD Pipeline (GitLab CI)
+
+Pipeline configurée avec **4 stages** : `build` → `test` → `quality` → `deploy`
+
+- **Build** : Compilation Maven
+- **Test** : Exécution des tests avec génération du rapport JaCoCo
+- **Quality** : Vérifications de qualité du code
+- **Deploy** : Build de l'image Docker (branche `main` uniquement)
+
+> ⚠️ **Note** : Pipeline non testée (absence d'instance GitLab)
+
+---
+
 ## 📡 Exemples d'Utilisation
 
 ### Créer un compte courant
