@@ -280,7 +280,27 @@ mvn test
 ```
 
 > **URL de l'application** : `http://localhost:9090`  
-> **Console H2** : `http://localhost:9090/h2-console` (JDBC: `jdbc:h2:mem:bankdb`, user: `sa`)
+> **Console H2** : `http://localhost:9090/h2-console`
+
+---
+
+## 🐳 Conteneurisation Docker
+
+L'application est conteneurisée avec **Docker** et **Docker Compose**.
+
+```bash
+# Build et lancer le conteneur
+docker-compose up --build -d
+
+# Vérifier les logs
+docker-compose logs -f
+
+# Arrêter le conteneur
+docker-compose down
+```
+
+
+**Bonnes pratiques appliquées** : Multi-stage build, utilisateur non-root, optimisation de la taille de l'image
 
 ---
 
