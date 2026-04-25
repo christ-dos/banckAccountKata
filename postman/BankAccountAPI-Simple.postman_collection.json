@@ -1,0 +1,348 @@
+{
+  "info": {
+    "name": "Bank Account API",
+    "description": "Collection organisée par scénarios. Chaque scénario utilise un compte dédié du data.sql pour éviter les interférences.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. READ ONLY - Consultation",
+      "description": "Requêtes en lecture seule (n'impactent pas les données)",
+      "item": [
+        {
+          "name": "Get Account #1 (1000€ EUR)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440001",
+            "description": "Compte courant avec 1000€"
+          }
+        },
+        {
+          "name": "Get Account #2 (500.50 USD)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440002",
+            "description": "Compte courant avec 500.50$"
+          }
+        },
+        {
+          "name": "Get Account #4 (100€ + 500€ overdraft)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440004",
+            "description": "Compte avec découvert"
+          }
+        },
+        {
+          "name": "Get Savings #6 (5000€)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440006",
+            "description": "Livret d'épargne"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. CREATE - Nouveau compte",
+      "item": [
+        {
+          "name": "Create Current Account (EUR)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"accountType\": \"CURRENT\",\n  \"currency\": \"EUR\"\n}"},
+            "url": "http://localhost:9090/v1/accounts"
+          }
+        },
+        {
+          "name": "Create Savings Account (EUR)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"accountType\": \"SAVINGS\",\n  \"currency\": \"EUR\"\n}"},
+            "url": "http://localhost:9090/v1/accounts"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. SCENARIO - Deposit (Compte #3)",
+      "description": "Déposer sur compte vide. Utilise UNIQUEMENT le compte #3.",
+      "item": [
+        {
+          "name": "1. Get initial (0€)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440003"
+          }
+        },
+        {
+          "name": "2. Deposit 250€",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"amount\": 250.00\n}"},
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440003/deposit"
+          }
+        },
+        {
+          "name": "3. Get final (250€)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440003"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. SCENARIO - Withdraw (Compte #1)",
+      "description": "Retirer d'un compte. Utilise UNIQUEMENT le compte #1.",
+      "item": [
+        {
+          "name": "1. Get initial (1000€)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440001"
+          }
+        },
+        {
+          "name": "2. Withdraw 200€",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"amount\": 200.00\n}"},
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440001/withdraw"
+          }
+        },
+        {
+          "name": "3. Get final (800€)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440001"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. SCENARIO - Overdraft Usage (Compte #4)",
+      "description": "Utiliser le découvert. Utilise UNIQUEMENT le compte #4.",
+      "item": [
+        {
+          "name": "1. Get initial (100€ + 500€ overdraft)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440004"
+          }
+        },
+        {
+          "name": "2. Withdraw 400€ (uses overdraft)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"amount\": 400.00\n}"},
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440004/withdraw",
+            "description": "100 - 400 = -300€ (OK car -300 > -500)"
+          }
+        },
+        {
+          "name": "3. Get final (-300€)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440004"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. SCENARIO - Deposit in Overdraft (Compte #5)",
+      "description": "Déposer sur compte en découvert. Utilise UNIQUEMENT le compte #5.",
+      "item": [
+        {
+          "name": "1. Get initial (-200€)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440005"
+          }
+        },
+        {
+          "name": "2. Deposit 300€",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"amount\": 300.00\n}"},
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440005/deposit",
+            "description": "-200 + 300 = +100€"
+          }
+        },
+        {
+          "name": "3. Get final (100€)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440005"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. SCENARIO - Savings Operations (Compte #6)",
+      "description": "Opérations sur livret. Utilise UNIQUEMENT le compte #6.",
+      "item": [
+        {
+          "name": "1. Get initial (5000€)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440006"
+          }
+        },
+        {
+          "name": "2. Deposit 1000€",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"amount\": 1000.00\n}"},
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440006/deposit"
+          }
+        },
+        {
+          "name": "3. Withdraw 2000€",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"amount\": 2000.00\n}"},
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440006/withdraw"
+          }
+        },
+        {
+          "name": "4. Get final (4000€)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440006"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. ACCOUNT STATEMENT - Relevé de compte",
+      "description": "Consulter l'historique des opérations d'un compte",
+      "item": [
+        {
+          "name": "Get Statement #1 (Default 30 days)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440001/statement",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "accounts", "550e8400-e29b-41d4-a716-446655440001", "statement"]
+            },
+            "description": "Relevé par défaut : 30 derniers jours"
+          }
+        },
+        {
+          "name": "Get Statement #1 (Custom Period)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440001/statement?startDate=2025-12-01&endDate=2025-12-31",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "accounts", "550e8400-e29b-41d4-a716-446655440001", "statement"],
+              "query": [
+                {"key": "startDate", "value": "2025-12-01"},
+                {"key": "endDate", "value": "2025-12-31"}
+              ]
+            },
+            "description": "Relevé pour décembre 2025"
+          }
+        },
+        {
+          "name": "Get Statement #1 (With Pagination)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440001/statement?page=0&size=10",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "accounts", "550e8400-e29b-41d4-a716-446655440001", "statement"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "10"}
+              ]
+            },
+            "description": "Relevé avec pagination : 10 opérations par page"
+          }
+        },
+        {
+          "name": "Get Statement #6 (Savings Account)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440006/statement",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "9090",
+              "path": ["v1", "accounts", "550e8400-e29b-41d4-a716-446655440006", "statement"]
+            },
+            "description": "Relevé d'un livret d'épargne"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. ERROR CASES - Cas d'erreur",
+      "item": [
+        {
+          "name": "Deposit exceeds limit on Savings #7 (FAIL)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"amount\": 10000.00\n}"},
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440007/deposit",
+            "description": "15000 + 10000 = 25000 > 22950 → ERREUR"
+          }
+        },
+        {
+          "name": "Set Overdraft on Savings #6 (FAIL)",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"overdraftLimit\": 100.00\n}"},
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-446655440006/overdraft",
+            "description": "Interdit sur livret → ERREUR 400"
+          }
+        },
+        {
+          "name": "Account Not Found (FAIL)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:9090/v1/accounts/550e8400-e29b-41d4-a716-999999999999",
+            "description": "Compte inexistant → ERREUR 404"
+          }
+        }
+      ]
+    }
+  ]
+}

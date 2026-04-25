@@ -1,0 +1,16 @@
+#Ignorer les fichiers inutiles pour le build Docker
+target/
+.mvn/
+.idea/
+*.iml
+*.ipr
+*.iws
+.git/
+.gitignore
+README.md
+README.en.md
+postman/
+assets/
+
+# Fichiers Maven locaux
+.m2/
