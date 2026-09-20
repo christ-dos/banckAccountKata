@@ -1,11 +1,7 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="BankAccountApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-    <option name="ACTIVE_PROFILES" />
+  <configuration default="false" name="BankAccountApplication" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.bank.BankAccountApplication" />
     <module name="bank-account" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="com.bank.BankAccountApplication" />
-    <option name="VM_PARAMETERS" value="-Dserver.port=9090" />
-    <option name="ALTERNATIVE_JRE_PATH" />
-    <option name="SHORTEN_COMMAND_LINE" value="NONE" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
