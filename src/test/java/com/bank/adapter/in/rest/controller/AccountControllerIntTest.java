@@ -37,7 +37,18 @@ class AccountControllerIntTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private String createAccountAndGetId(AccountType accountType) throws Exception {
+        CreateAccountRequest createRequest = new CreateAccountRequest(accountType, EUR);
+        String createResponse = mockMvc.perform(post("/v1/accounts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
+        return objectMapper.readTree(createResponse).get("accountId").asText();
+    }
 
     // ========================================
     // INTEGRATION TESTS - ONE PER ENDPOINT
@@ -256,8 +267,8 @@ class AccountControllerIntTest {
 
     @Test
     void test_getAccountStatement_default_should_work_end_to_end() throws Exception {
-        // Given - Use existing account from data.sql
-        String accountId = "550e8400-e29b-41d4-a716-446655440001";
+        // Given
+        String accountId = createAccountAndGetId(AccountType.CURRENT);
 
         // When / Then - Verify HTTP → Controller → Service → Repository → DB
         mockMvc.perform(get("/v1/accounts/{accountId}/statement", accountId))
@@ -278,7 +289,7 @@ class AccountControllerIntTest {
     @Test
     void test_getAccountStatement_with_custom_period_should_work_end_to_end() throws Exception {
         // Given
-        String accountId = "550e8400-e29b-41d4-a716-446655440001";
+        String accountId = createAccountAndGetId(AccountType.CURRENT);
         String startDate = "2025-12-01";
         String endDate = "2025-12-31";
 
@@ -297,7 +308,7 @@ class AccountControllerIntTest {
     @Test
     void test_getAccountStatement_with_pagination_should_work_end_to_end() throws Exception {
         // Given
-        String accountId = "550e8400-e29b-41d4-a716-446655440001";
+        String accountId = createAccountAndGetId(AccountType.CURRENT);
         int page = 0;
         int size = 5;
 
@@ -314,8 +325,8 @@ class AccountControllerIntTest {
 
     @Test
     void test_getAccountStatement_for_savings_account_should_work_end_to_end() throws Exception {
-        // Given - Savings account from data.sql
-        String accountId = "550e8400-e29b-41d4-a716-446655440006";
+        // Given
+        String accountId = createAccountAndGetId(AccountType.SAVINGS);
 
         // When / Then
         mockMvc.perform(get("/v1/accounts/{accountId}/statement", accountId))
@@ -386,7 +397,7 @@ class AccountControllerIntTest {
     @Test
     void test_getAccountStatement_should_return_400_when_start_date_after_end_date() throws Exception {
         // Given
-        String accountId = "550e8400-e29b-41d4-a716-446655440001";
+        String accountId = createAccountAndGetId(AccountType.CURRENT);
         String startDate = "2026-01-31";
         String endDate = "2026-01-01";
 
@@ -403,8 +414,8 @@ class AccountControllerIntTest {
 
     @Test
     void test_getAccountStatement_operations_should_be_sorted_desc_by_date() throws Exception {
-        // Given - Account with operations from data.sql
-        String accountId = "550e8400-e29b-41d4-a716-446655440001";
+        // Given
+        String accountId = createAccountAndGetId(AccountType.CURRENT);
 
         // When / Then - Operations should be sorted DESC (most recent first)
         mockMvc.perform(get("/v1/accounts/{accountId}/statement", accountId)
@@ -412,7 +423,7 @@ class AccountControllerIntTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.operations.content").isArray());
-        // Note: We can't test exact order without knowing operation dates from data.sql
+        // Note: We can't test exact order without knowing operation dates
         // But the repository ensures DESC sort by operationDate
     }
 
