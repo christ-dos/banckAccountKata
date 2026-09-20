@@ -7,7 +7,7 @@ import java.math.BigDecimal;
  * This is a pure domain configuration (no external dependencies like Lombok).
  * The adapter layer will extend this class and add Spring annotations.
  */
-public class BankAccountProperties {
+public abstract class BankAccountProperties {
 
     private SavingsAccountProperties savings = new SavingsAccountProperties();
 

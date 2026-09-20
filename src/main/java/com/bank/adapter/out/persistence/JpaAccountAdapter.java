@@ -38,10 +38,10 @@ public class JpaAccountAdapter implements AccountPort {
     }
 
     private AccountEntity mapDomainToEntity(Account account) {
-        if (account instanceof CurrentAccount) {
-            return accountMapper.toCurrentAccountEntity((CurrentAccount) account);
-        } else if (account instanceof SavingsAccount) {
-            return accountMapper.toSavingsAccountEntity((SavingsAccount) account);
+        if (account instanceof CurrentAccount currentAccount) {
+            return accountMapper.toCurrentAccountEntity(currentAccount);
+        } else if (account instanceof SavingsAccount savingsAccount) {
+            return accountMapper.toSavingsAccountEntity(savingsAccount);
         }
         throw new IllegalArgumentException("Unsupported account type: " + account.getClass().getName());
     }
