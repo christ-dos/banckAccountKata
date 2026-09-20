@@ -114,8 +114,13 @@ public class AccountController implements ApiDocAccountController {
     }
 
     private AccountDto toDtoAccount(Account account) {
-        return account instanceof CurrentAccount ?
-                mapper.toCurrentAccountDto((CurrentAccount) account) :
-                mapper.toSavingsAccountDto((SavingsAccount) account);
+        if ( account instanceof CurrentAccount currentAccount ){
+            return mapper.toCurrentAccountDto(currentAccount);
+        }
+
+        if ( account instanceof SavingsAccount savingsAccount ){
+            return mapper.toSavingsAccountDto(savingsAccount);
+        }
+        throw new IllegalArgumentException("Unsupported account type: " + account.getClass());
     }
 }
