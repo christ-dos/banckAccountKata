@@ -11,7 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -21,7 +21,7 @@ import java.util.UUID;
 /**
  * JPA adapter for Operation persistence operations.
  */
-@Component
+@Repository
 @RequiredArgsConstructor
 @Slf4j
 public class JpaOperationAdapter implements OperationPort {

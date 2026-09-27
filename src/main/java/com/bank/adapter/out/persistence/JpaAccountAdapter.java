@@ -9,7 +9,7 @@ import com.bank.domain.model.CurrentAccount;
 import com.bank.domain.model.SavingsAccount;
 import com.bank.domain.port.out.AccountPort;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -17,7 +17,7 @@ import java.util.UUID;
 /**
  * JPA adapter for Account persistence operations.
  */
-@Component
+@Repository
 @RequiredArgsConstructor
 public class JpaAccountAdapter implements AccountPort {
 
